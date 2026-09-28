@@ -1,0 +1,9 @@
+[
+ {"offline":true,"name":"saved progress","js":"const s=JSON.parse(localStorage.getItem('leo-street-active-story-v1'));if(!s||s.run.scenarioId!=='panic07'||s.elapsedSeconds<5)throw Error('Save did not survive close');return {elapsed:s.elapsedSeconds,seed:s.run.seed,scenario:s.run.scenarioId};"},
+ {"name":"enter","js":"qaClick('进入危机内阁');"},
+ {"wait":400,"name":"resume","js":"qaClick('继续未完成的危机');"},
+ {"wait":800,"name":"restored game","js":"if(!document.body.innerText.includes('保持沉默'))throw Error('Resume failed');qaClick('保持沉默');"},
+ {"wait":400,"name":"decision applied","js":"const s=JSON.parse(localStorage.getItem('leo-street-active-story-v1'));if(s.submitted!=='silence')throw Error('Decision missing');return {submitted:s.submitted,elapsed:s.elapsedSeconds,seed:s.run.seed};","screenshot":"resumed.png"},
+ {"name":"economy tab","js":"qaClick('产业与贸易');"},
+ {"wait":400,"name":"economy visible","js":"return {text:document.body.innerText,buttons:[...document.querySelectorAll('button')].map(b=>b.textContent)};","screenshot":"economy.png"}
+]

@@ -1,0 +1,12 @@
+[
+ {"offline":true,"name":"offline launch","js":"if(!document.body.innerText.includes('进入危机内阁'))throw Error('Launch missing');return {width:innerWidth,height:innerHeight,online:navigator.onLine};","screenshot":"launch.png"},
+ {"name":"enter","js":"qaClick('进入危机内阁');"},
+ {"wait":400,"name":"new player","js":"qaClick('我是新手');"},
+ {"wait":400,"name":"tutorial transaction","js":"qaClick('付 2 枚钱');"},
+ {"wait":300,"name":"tutorial feedback","js":"return document.body.innerText;","screenshot":"tutorial.png"},
+ {"name":"skip lesson","js":"qaClick('跳过教学');"},
+ {"wait":400,"name":"open briefing","js":"qaClick('看前情提要');"},
+ {"wait":400,"name":"begin story","js":"const b=[...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='开始');if(!b)throw Error('No begin');b.click();"},
+ {"wait":2500,"name":"story","js":"if(!document.body.innerText.includes('保持沉默'))throw Error('No story decisions');return {text:document.body.innerText,buttons:[...document.querySelectorAll('button')].map(b=>b.textContent)};","screenshot":"story.png"},
+ {"wait":5200,"name":"save","js":"const raw=localStorage.getItem('leo-street-active-story-v1');if(!raw)throw Error('Missing active save');return JSON.parse(raw);"}
+]

@@ -1,0 +1,8 @@
+[
+ {"name":"launch","js":"if(!document.body.innerText.includes('进入危机内阁'))throw Error(document.body.innerText);return document.body.innerText;","screenshot":"launch.png"},
+ {"name":"enter","js":"qaClick('进入危机内阁');"},
+ {"wait":400,"name":"new player","js":"qaClick('我是新手');"},
+ {"wait":500,"name":"tutorial","js":"if(!document.body.innerText.includes('第一关 / 入门演练'))throw Error('Tutorial not shown');return document.body.innerText;","screenshot":"tutorial.png"},
+ {"name":"skip lesson","js":"qaClick('跳过教学');"},
+ {"wait":500,"name":"briefing","js":"return document.body.innerText;","screenshot":"briefing.png"}
+]

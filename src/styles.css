@@ -1,0 +1,803 @@
+@import "tailwindcss";
+.cabinet-secondary.text-down {
+  color: var(--color-down);
+}
+
+/* The cabinet is the 19th-century government desk this game is played on. */
+.cabinet-shell {
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-lg: 5px;
+  --radius-xl: 6px;
+  --font-display: "Playfair Display", "Noto Serif SC", Georgia, "Times New Roman", "STZhongsong", serif;
+  font-family: var(--font-sans);
+}
+.cabinet-kicker {
+  color: var(--color-brass-deep);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+}
+.cabinet-primary,
+.cabinet-secondary {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 3px;
+  padding: 9px 13px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.cabinet-primary {
+  background: var(--color-brass);
+  color: var(--color-surface);
+  border: 1px solid var(--color-brass-deep);
+  box-shadow: inset 0 1px 0 #ffffff4d, inset 0 -1px 0 #00000026;
+}
+.cabinet-secondary {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border: 1px solid var(--color-line);
+  box-shadow: inset 0 1px 0 #ffffff59;
+}
+.cabinet-primary:hover {
+  background: var(--color-brass-bright);
+}
+.cabinet-secondary:hover {
+  background: var(--color-surface-2);
+}
+.cabinet-tab {
+  display: flex;
+  flex: 1 0 auto;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 13px;
+  color: var(--color-muted);
+  border-bottom: 3px solid transparent;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.cabinet-tab-active {
+  border-bottom-color: var(--color-brass);
+  color: var(--color-brass-deep);
+  background: var(--color-surface-2);
+}
+.atlas-marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 7px 10px;
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px #3a2c1833;
+}
+.atlas-marker-active {
+  background: var(--color-surface-2);
+  border-color: var(--color-brass);
+  color: var(--color-ink);
+}
+.cabinet-shell button:focus-visible {
+  outline: 3px solid var(--color-brass);
+  outline-offset: 3px;
+}
+@media (max-width: 500px) {
+  .atlas-marker {
+    gap: 4px;
+    padding: 5px 6px;
+    font-size: 10px;
+  }
+  .atlas-marker svg {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+/*
+ * Victoria-era statecraft theme: bright parchment desks, brass rulings,
+ * serif display type, tight radii and double-ruled panel borders.
+ */
+@theme {
+  --font-display: "Playfair Display", "Noto Serif SC", Georgia, "Times New Roman", "STZhongsong", serif;
+  --font-sans: "Noto Serif SC", Georgia, "STZhongsong", "SimSun", "Segoe UI", "Microsoft YaHei", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --color-paper: #eadfc6;
+  --color-paper-deep: #dccfae;
+  --color-surface: #f5edd9;
+  --color-surface-2: #e4d6b8;
+  --color-ink: #2c2214;
+  --color-ink-soft: #55452c;
+  --color-muted: #857252;
+  --color-line: #b7a37a;
+  --color-teal: #2f5d50;
+  --color-teal-deep: #22463c;
+  --color-teal-soft: #d8d2b6;
+  --color-brass: #8f6d1f;
+  --color-brass-bright: #b08a2e;
+  --color-brass-deep: #6e5316;
+  --color-up: #3e7c4f;
+  --color-down: #b2382b;
+  --color-wood: #7a5c3a;
+  --color-wood-deep: #4a3823;
+  --color-grass: #eadfc6;
+  --color-seal: #9e2f25;
+
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-lg: 5px;
+  --radius-xl: 6px;
+
+  --shadow-border: 0 1px 2px #3a2c1814, 0 8px 24px #3a2c1826;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html,
+  body,
+  #app {
+    min-height: 100%;
+    background: var(--color-paper);
+    color: var(--color-ink);
+  }
+
+  body {
+    font-family: var(--font-sans);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    font-family: var(--font-display);
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* vic-* primitives: the bright parchment design system.               */
+/* ------------------------------------------------------------------ */
+
+/* Ornamental corner filigree, shared by .vic-frame and .vic-cert.
+   One brass scrollwork SVG, rotated per corner. */
+:root {
+  --vic-filigree-tl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cg fill='none' stroke='%238f6d1f' stroke-width='1.5' stroke-linecap='round'%3E%3Cpath d='M3 33 Q3 3 33 3'/%3E%3Cpath d='M6.5 33 Q6.5 6.5 33 6.5' opacity='.55'/%3E%3Cpath d='M3 33 C 13 31 18 26 17 19 C 16.4 14 11 13.4 10 17.5 C 9.4 20.4 12.5 22 14 20'/%3E%3Cpath d='M33 3 C 31 13 26 18 19 17 C 14 16.4 13.4 11 17.5 10 C 20.4 9.4 22 12.5 20 14'/%3E%3Ccircle cx='26' cy='9' r='1.7' fill='%238f6d1f' stroke='none'/%3E%3Ccircle cx='9' cy='26' r='1.7' fill='%238f6d1f' stroke='none'/%3E%3C/g%3E%3C/svg%3E");
+  --vic-filigree-tr: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cg transform='rotate(90 18 18)' fill='none' stroke='%238f6d1f' stroke-width='1.5' stroke-linecap='round'%3E%3Cpath d='M3 33 Q3 3 33 3'/%3E%3Cpath d='M6.5 33 Q6.5 6.5 33 6.5' opacity='.55'/%3E%3Cpath d='M3 33 C 13 31 18 26 17 19 C 16.4 14 11 13.4 10 17.5 C 9.4 20.4 12.5 22 14 20'/%3E%3Cpath d='M33 3 C 31 13 26 18 19 17 C 14 16.4 13.4 11 17.5 10 C 20.4 9.4 22 12.5 20 14'/%3E%3Ccircle cx='26' cy='9' r='1.7' fill='%238f6d1f' stroke='none'/%3E%3Ccircle cx='9' cy='26' r='1.7' fill='%238f6d1f' stroke='none'/%3E%3C/g%3E%3C/svg%3E");
+  --vic-filigree-br: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cg transform='rotate(180 18 18)' fill='none' stroke='%238f6d1f' stroke-width='1.5' stroke-linecap='round'%3E%3Cpath d='M3 33 Q3 3 33 3'/%3E%3Cpath d='M6.5 33 Q6.5 6.5 33 6.5' opacity='.55'/%3E%3Cpath d='M3 33 C 13 31 18 26 17 19 C 16.4 14 11 13.4 10 17.5 C 9.4 20.4 12.5 22 14 20'/%3E%3Cpath d='M33 3 C 31 13 26 18 19 17 C 14 16.4 13.4 11 17.5 10 C 20.4 9.4 22 12.5 20 14'/%3E%3Ccircle cx='26' cy='9' r='1.7' fill='%238f6d1f' stroke='none'/%3E%3Ccircle cx='9' cy='26' r='1.7' fill='%238f6d1f' stroke='none'/%3E%3C/g%3E%3C/svg%3E");
+  --vic-filigree-bl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cg transform='rotate(270 18 18)' fill='none' stroke='%238f6d1f' stroke-width='1.5' stroke-linecap='round'%3E%3Cpath d='M3 33 Q3 3 33 3'/%3E%3Cpath d='M6.5 33 Q6.5 6.5 33 6.5' opacity='.55'/%3E%3Cpath d='M3 33 C 13 31 18 26 17 19 C 16.4 14 11 13.4 10 17.5 C 9.4 20.4 12.5 22 14 20'/%3E%3Cpath d='M33 3 C 31 13 26 18 19 17 C 14 16.4 13.4 11 17.5 10 C 20.4 9.4 22 12.5 20 14'/%3E%3Ccircle cx='26' cy='9' r='1.7' fill='%238f6d1f' stroke='none'/%3E%3Ccircle cx='9' cy='26' r='1.7' fill='%238f6d1f' stroke='none'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Paper card with a keyed double border: ink outer rule, breathing room,
+   then a fine brass inner rule. */
+.vic-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 4px;
+  box-shadow:
+    inset 0 0 0 2px var(--color-surface),
+    inset 0 0 0 3px var(--color-brass),
+    inset 0 0 0 4px var(--color-surface),
+    inset 0 1px 0 #ffffff59,
+    inset 0 0 22px #3a2c1812,
+    var(--shadow-border);
+}
+
+/* Filigree scrollwork in all four corners, on top of .vic-panel. */
+.vic-frame {
+  position: relative;
+}
+.vic-frame::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  pointer-events: none;
+  opacity: 0.45;
+  background:
+    var(--vic-filigree-tl) left top no-repeat,
+    var(--vic-filigree-tr) right top no-repeat,
+    var(--vic-filigree-br) right bottom no-repeat,
+    var(--vic-filigree-bl) left bottom no-repeat;
+  background-size: 32px 32px;
+}
+
+/* Serif uppercase kicker with wide tracking. */
+.vic-kicker {
+  color: var(--color-brass-deep);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+/* Brass button: cast-metal relief with a top highlight and sunken base. */
+.vic-btn-brass {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 3px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  background: linear-gradient(180deg, #c29a36 0%, var(--color-brass-bright) 30%, var(--color-brass) 78%, #7d5f1a 100%);
+  color: var(--color-surface);
+  border: 1px solid var(--color-brass-deep);
+  box-shadow:
+    inset 0 1px 0 #ffffff73,
+    inset 0 -2px 0 #00000030,
+    inset 0 0 0 1px #ffffff14,
+    0 2px 6px #3a2c1833;
+  text-shadow: 0 1px 1px #00000040;
+  transition: filter 0.12s ease, transform 0.05s ease, box-shadow 0.12s ease;
+}
+.vic-btn-brass:hover {
+  filter: brightness(1.08);
+}
+.vic-btn-brass:active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 1px 0 #ffffff59,
+    inset 0 -1px 0 #00000026,
+    0 1px 2px #3a2c1826;
+}
+
+/* Wax-seal red primary button. */
+.vic-btn-seal {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 3px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  background: linear-gradient(180deg, #c04a3c 0%, #b03b2f 30%, var(--color-seal) 78%, #83231b 100%);
+  color: #f7efdd;
+  border: 1px solid #6f1e17;
+  box-shadow:
+    inset 0 1px 0 #ffffff5c,
+    inset 0 -2px 0 #0000003a,
+    inset 0 0 0 1px #ffffff10,
+    0 2px 6px #3a2c1833;
+  text-shadow: 0 1px 1px #0000004d;
+  transition: filter 0.12s ease, transform 0.05s ease, box-shadow 0.12s ease;
+}
+.vic-btn-seal:hover {
+  filter: brightness(1.08);
+}
+.vic-btn-seal:active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 1px 0 #ffffff40,
+    inset 0 -1px 0 #00000030,
+    0 1px 2px #3a2c1826;
+}
+
+/* Quiet paper button. */
+.vic-btn-ghost {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 3px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  background: transparent;
+  color: var(--color-ink-soft);
+  border: 1px solid var(--color-line);
+}
+.vic-btn-ghost:hover {
+  background: var(--color-surface-2);
+  color: var(--color-ink);
+}
+.vic-btn-brass:focus-visible,
+.vic-btn-seal:focus-visible,
+.vic-btn-ghost:focus-visible {
+  outline: 3px solid var(--color-brass);
+  outline-offset: 3px;
+}
+
+/* Floral divider: hairlines flanking the content (put ❦ inside, or leave
+   empty and the ornament is supplied automatically). */
+.vic-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-brass-deep);
+  font-size: 12px;
+  line-height: 1;
+  margin: 10px 0;
+}
+.vic-divider::before,
+.vic-divider::after {
+  content: "";
+  flex: 1;
+  height: 0;
+  border-top: 1px solid var(--color-line);
+  box-shadow: 0 1px 0 #ffffff40;
+}
+.vic-divider:empty {
+  display: block;
+  position: relative;
+  isolation: isolate;
+  text-align: center;
+}
+.vic-divider:empty::before {
+  content: "❦";
+  position: relative;
+  display: inline-block;
+  padding: 0 14px;
+  background: var(--color-paper);
+  border-top: 0;
+  box-shadow: none;
+}
+.vic-divider:empty::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 0;
+  border-top: 1px solid var(--color-line);
+  box-shadow: 0 1px 0 #ffffff40;
+}
+
+/* Ledger table: fine horizontal rules, tabular figures. */
+.vic-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.vic-table th {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-brass-deep);
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 3px double var(--color-brass);
+}
+.vic-table td {
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--color-ink);
+  border-bottom: 1px solid #b7a37a73;
+}
+.vic-table tbody tr:hover {
+  background: #6e53160d;
+}
+
+/* Top resource bar: ruled parchment band. */
+.vic-topbar {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-brass-deep);
+  box-shadow: inset 0 -3px 0 -1px var(--color-surface), inset 0 -4px 0 -1px var(--color-brass),
+    0 4px 14px #3a2c1826;
+}
+
+/* Bottom round-button lens bar. */
+.vic-lens {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  box-shadow: inset 0 1px 0 #ffffff59, var(--shadow-border);
+}
+.vic-lens button,
+.vic-lens [role="button"] {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-line);
+  color: var(--color-ink-soft);
+  box-shadow: inset 0 1px 0 #ffffff4d;
+}
+.vic-lens button:hover,
+.vic-lens [role="button"]:hover {
+  border-color: var(--color-brass);
+  color: var(--color-ink);
+}
+
+/* Newspaper masthead. */
+.vic-masthead {
+  font-family: var(--font-display);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: var(--color-ink);
+  border-top: 3px double var(--color-ink);
+  border-bottom: 3px double var(--color-ink);
+  padding: 10px 0;
+}
+
+/* Drop cap for briefing / dispatch body copy. Works for CJK glyphs too. */
+.vic-dropcap::first-letter {
+  float: left;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 3.1em;
+  line-height: 0.82;
+  padding: 0.05em 0.14em 0 0;
+  color: var(--color-brass-deep);
+  text-shadow: 0 1px 0 #ffffff59;
+}
+
+/* Hand-pressed wax seal. Put a glyph (✦ etc.) inside. */
+.vic-wax {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  color: #f3dcc9;
+  font-size: 18px;
+  line-height: 1;
+  background: radial-gradient(circle at 36% 30%, #c0564a 0%, var(--color-seal) 55%, #7c211a 100%);
+  border-radius: 47% 53% 51% 49% / 52% 46% 54% 48%;
+  box-shadow:
+    inset 0 0 0 3px #6f1e1773,
+    inset 0 0 0 5px #c0564a40,
+    inset 0 3px 6px #ffffff38,
+    inset 0 -4px 8px #00000042,
+    0 2px 5px #3a2c1840;
+  text-shadow: 0 -1px 1px #00000059;
+}
+
+/* Letterpress title: ink pressed into the sheet. */
+.vic-letterpress {
+  font-family: var(--font-display);
+  color: var(--color-ink);
+  text-shadow:
+    0 1px 0 #ffffff73,
+    0 -1px 1px #3a2c1826;
+}
+
+/* Certificate / citation frame: broad double rule, inner hairline, scrollwork. */
+.vic-cert {
+  position: relative;
+  background: var(--color-surface);
+  border: 3px double var(--color-brass-deep);
+  border-radius: 3px;
+  box-shadow:
+    inset 0 0 0 4px var(--color-surface),
+    inset 0 0 0 5px var(--color-line),
+    inset 0 0 26px #3a2c1810,
+    var(--shadow-border);
+}
+.vic-cert::before {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  pointer-events: none;
+  opacity: 0.5;
+  background:
+    var(--vic-filigree-tl) left top no-repeat,
+    var(--vic-filigree-tr) right top no-repeat,
+    var(--vic-filigree-br) right bottom no-repeat,
+    var(--vic-filigree-bl) left bottom no-repeat;
+  background-size: 36px 36px;
+}
+
+/* Rosette: a brass starburst medallion for mastheads and card corners. */
+.vic-rosette {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--color-brass-deep) 0 16%, var(--color-brass) 17% 24%, transparent 25%),
+    repeating-conic-gradient(from 0deg, #8f6d1f73 0 11deg, transparent 11deg 22.5deg);
+  -webkit-mask-image: radial-gradient(circle, #000 67%, transparent 69%);
+  mask-image: radial-gradient(circle, #000 67%, transparent 69%);
+}
+
+/* Ledger chips for the practice-desk HUD. */
+.hud-chip {
+  display: flex;
+  flex-direction: column;
+  min-width: 4.6rem;
+  padding: 0.35rem 0.55rem 0.4rem;
+  background: var(--color-surface);
+  border-radius: 3px;
+  border: 1px solid var(--color-line);
+  box-shadow: inset 0 1px 0 #ffffff59, 0 2px 4px #3a2c181f;
+}
+
+.hud-chip .k {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+.hud-chip .v {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: var(--color-ink);
+  line-height: 1.15;
+}
+
+/* Double-ruled dispatch panel: brass outer rule, inner hairline, soft shade. */
+.panel-shell {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  box-shadow:
+    inset 0 0 0 1px var(--color-surface),
+    inset 0 0 0 3px var(--color-teal-soft),
+    inset 0 1px 0 #ffffff59,
+    var(--shadow-border);
+  border-radius: 4px;
+}
+
+.tick-up {
+  color: var(--color-up);
+}
+
+.tick-down {
+  color: var(--color-down);
+}
+
+@keyframes tape {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.tape-track {
+  animation: tape 36s linear infinite;
+}
+
+/* The wire ticker: a brass-ruled telegraph band. */
+.news-tape {
+  background: var(--color-paper-deep);
+  color: var(--color-ink-soft);
+  border-top: 1px solid var(--color-brass-deep);
+  border-bottom: 1px solid var(--color-brass-deep);
+}
+
+.hud-frame {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  box-shadow: inset 0 1px 0 #ffffff59;
+  border-radius: 3px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Motion. Small, quick, and always disabled under reduced-motion      */
+/* (the media query above neutralises all of these).                   */
+/* ------------------------------------------------------------------ */
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-pop {
+  animation: pop-in 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* New chatter arrives from the left, so the eye catches it without a flash. */
+.animate-slide-in {
+  animation: slide-in 0.2s ease-out both;
+}
+
+/* A price that just moved. Applied for one tick, then removed. */
+@keyframes flash-up {
+  0% {
+    background-color: color-mix(in srgb, var(--color-up) 22%, transparent);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes flash-down {
+  0% {
+    background-color: color-mix(in srgb, var(--color-down) 22%, transparent);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.flash-up {
+  animation: flash-up 0.6s ease-out;
+}
+
+.flash-down {
+  animation: flash-down 0.6s ease-out;
+}
+
+/* Original strategy-room visual system: shared by campaign, matches and practice. */
+.strategy-app {
+  min-height: 100dvh;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.23 0 0 0 0 0.17 0 0 0 0 0.09 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(360px 280px at 11% 20%, #8f6d1f12, transparent 70%),
+    radial-gradient(440px 340px at 86% 64%, #6e531614, transparent 70%),
+    radial-gradient(300px 240px at 58% 6%, #7a5c3a0e, transparent 70%),
+    repeating-linear-gradient(90deg, #55452c06 0 1px, transparent 1px 7px),
+    repeating-linear-gradient(0deg, #55452c05 0 1px, transparent 1px 9px),
+    repeating-linear-gradient(0deg, #6e53160a 0 1px, transparent 1px 40px),
+    radial-gradient(120% 90% at 50% 0%, var(--color-surface) 0%, var(--color-paper) 55%, var(--color-paper-deep) 100%);
+  color: var(--color-ink);
+}
+.strategy-app .cabinet-shell {
+  --radius-md: 4px;
+  --radius-lg: 5px;
+  --radius-xl: 6px;
+  --font-display: "Playfair Display", "Noto Serif SC", Georgia, "Times New Roman", "STZhongsong", serif;
+}
+.strategy-app .panel-shell {
+  border: 1px solid var(--color-line);
+  border-radius: 4px;
+  box-shadow:
+    inset 0 0 0 1px var(--color-surface),
+    inset 0 0 0 3px var(--color-teal-soft),
+    inset 0 1px 0 #ffffff59,
+    var(--shadow-border);
+}
+.strategy-app button,
+.strategy-app input,
+.strategy-app select {
+  border-radius: 3px;
+}
+.strategy-app .cabinet-primary {
+  background: var(--color-brass);
+  color: var(--color-surface);
+  border-color: var(--color-brass-deep);
+}
+.strategy-app .cabinet-primary:hover {
+  background: var(--color-brass-bright);
+}
+.strategy-app .cabinet-kicker {
+  color: var(--color-brass-deep);
+}
+.strategy-app .cabinet-tab {
+  font-size: 13px;
+  border-bottom-width: 2px;
+}
+.strategy-app [class*="shadow-[3px"],
+.strategy-app [class*="shadow-[inset_"] {
+  box-shadow: none;
+  border: 1px solid var(--color-line);
+}
+/* Flatten every oversized cartoon radius back to a dispatch-card corner. */
+.strategy-app [class*="rounded-[1"],
+.strategy-app [class*="rounded-[2"] {
+  border-radius: 3px;
+}
+.strategy-app .cabinet-topbar {
+  box-shadow: inset 0 -1px 0 var(--color-brass-deep), 0 4px 14px #3a2c1826;
+}
+.strategy-app .mission-timeline {
+  box-shadow: inset 0 1px 0 #ffffff59, inset 0 -1px 0 #3a2c181f;
+}
+/* A ruled ledger page: pale brass rules every 26px, faint at the fold. */
+.strategy-register {
+  background:
+    repeating-linear-gradient(0deg, #8f6d1f14 0 1px, transparent 1px 26px),
+    repeating-linear-gradient(90deg, #8f6d1f0a 0 1px, transparent 1px 26px),
+    var(--color-paper);
+}
+
+/* Flatten every oversized cartoon radius back to a dispatch-card corner,
+   and drop the old hard candy shadows wherever they survive. */
+.strategy-register [class*="rounded-[1"],
+.strategy-register [class*="rounded-[2"] {
+  border-radius: 3px;
+}
+.strategy-register [class*="shadow-[3px"] {
+  box-shadow: none;
+}
+
+/* Warm parchment variant (was "slate"). */
+.strategy-app[data-appearance="slate"],
+.collection-appearance-preview[data-appearance="slate"] {
+  --color-paper: #ead8b8;
+  --color-paper-deep: #d8c29a;
+  --color-surface: #f6e9cb;
+  --color-surface-2: #e6d2a8;
+  --color-teal: #4d5c3a;
+  --color-teal-deep: #3a4629;
+  --color-teal-soft: #ddd0a6;
+  --color-line: #b09468;
+  --color-muted: #8a7350;
+}
+
+/* Cool parchment variant (was "naval"). */
+.strategy-app[data-appearance="naval"],
+.collection-appearance-preview[data-appearance="naval"] {
+  --color-paper: #dfe2d2;
+  --color-paper-deep: #ccd0ba;
+  --color-surface: #eef0e2;
+  --color-surface-2: #d8dcc4;
+  --color-ink: #23301f;
+  --color-ink-soft: #44553a;
+  --color-muted: #6f7d5c;
+  --color-teal: #2f5d50;
+  --color-teal-deep: #22463c;
+  --color-teal-soft: #cfd6bc;
+  --color-line: #a3a888;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .strategy-app *,
+  .strategy-app *::before,
+  .strategy-app *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

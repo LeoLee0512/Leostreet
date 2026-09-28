@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build / deploy output
+.vercel/
+.tanstack/
+dist/
+desktop/dist/
+
+# Packaging toolchain (downloadable, not source)
+desktop/vendor/
+desktop/tools/
+
+# QA / local artifacts
+artifacts/
+screenshots/
+attachments/
+*.log
+
+# Platform / tool config
+.claude/
+.grok/*
+!.grok/app-env.json
+
+# Installer binaries are published as Release assets
+release/*.exe
+release/*.zip
+
+# Junk / secrets
+{}
+.env
+.env.*
