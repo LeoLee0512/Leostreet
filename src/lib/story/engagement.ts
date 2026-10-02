@@ -1,4 +1,5 @@
 import type { StoryLength } from "./types.ts";
+import { GAME_DISCLAIMER } from "../disclaimer.ts";
 import type { MissionCondition } from "./mission.ts";
 
 /** Personal, local records. They never grant money, a clear, or a paid entitlement. */
@@ -219,6 +220,6 @@ export function reportShareText(report: StoryReport, en = false): string {
     ? { sprint: "30-minute", standard: "1-hour", deep: "90-minute", epic: "3-hour" }
     : { sprint: "半小时", standard: "一小时", deep: "一个半小时", epic: "三小时" };
   return en
-    ? `Leo Street · ${report.scenarioNameEn}\n${report.won ? "Crisis contained" : "Still learning"} · Recovery ${report.stars}/3 stars\nReal income ${report.income.toFixed(1)} · Employment ${report.employment.toFixed(1)}%\n${lengths[report.length]} campaign · ${Math.floor(report.elapsedSeconds / 60)} minutes played · Seed ${report.seed}\nA local game report, not a verified ranking or financial advice.`
-    : `狮子街传说 · ${report.scenarioNameZh}\n${report.won ? "守住了危机" : "这次积累了经验"} · 复苏 ${report.stars}/3 星\n生活购买力 ${report.income.toFixed(1)} · 就业 ${report.employment.toFixed(1)}%\n${lengths[report.length]}战役 · 已游玩 ${Math.floor(report.elapsedSeconds / 60)} 分钟 · 种子 ${report.seed}\n个人本地游戏战报，不是经核验的排名或投资建议。`;
+    ? `Leo Street · ${report.scenarioNameEn}\n${report.won ? "Crisis contained" : "Still learning"} · Recovery ${report.stars}/3 stars\nReal income ${report.income.toFixed(1)} · Employment ${report.employment.toFixed(1)}%\n${lengths[report.length]} campaign · ${Math.floor(report.elapsedSeconds / 60)} minutes played · Seed ${report.seed}\nA local game report, not a verified ranking.\n${GAME_DISCLAIMER.en}`
+    : `狮子街传说 · ${report.scenarioNameZh}\n${report.won ? "守住了危机" : "这次积累了经验"} · 复苏 ${report.stars}/3 星\n生活购买力 ${report.income.toFixed(1)} · 就业 ${report.employment.toFixed(1)}%\n${lengths[report.length]}战役 · 已游玩 ${Math.floor(report.elapsedSeconds / 60)} 分钟 · 种子 ${report.seed}\n个人本地游戏战报，不是经核验的排名。\n${GAME_DISCLAIMER.zh}`;
 }

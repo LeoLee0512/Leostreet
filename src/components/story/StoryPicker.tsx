@@ -321,7 +321,7 @@ export function StoryPicker({ onBack }: { onBack: () => void }) {
             ? "Multiple seats are reserved for future multiplayer."
             : "多身份席位保留给后续联机模式。"}
         </p>
-        <div className="sticky bottom-0 z-20 mt-6 border-t border-line bg-paper/95 py-4 backdrop-blur-sm">
+        <div className="sticky bottom-0 z-20 mt-6 border-t border-line bg-paper/95 pt-4 pb-9 backdrop-blur-sm">
           <button
             type="button"
             className="vic-btn-seal min-h-11 w-full items-center justify-center gap-2 px-4 py-3 font-semibold"

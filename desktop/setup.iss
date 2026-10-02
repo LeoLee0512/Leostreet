@@ -21,6 +21,8 @@ DisableProgramGroupPage=yes
 CloseApplications=yes
 RestartApplications=no
 SetupLogging=yes
+; Permanent disclaimer (owner, 2026-10-02): shown before any file is installed. Do not remove.
+InfoBeforeFile=免责声明.txt
 InfoAfterFile=试玩说明.txt
 
 [Languages]

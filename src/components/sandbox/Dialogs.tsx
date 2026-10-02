@@ -24,7 +24,7 @@ export function EventDialog({ game, en }: { game: SandboxGame; en: boolean }) {
   const d = dateOf(e.week);
   const kind = KIND[e.kind] ?? KIND.crisis; // saves from before categories existed
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/35 p-3 sm:items-center" role="dialog" aria-modal aria-labelledby="event-title">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/35 p-3 pb-9 sm:items-center" role="dialog" aria-modal aria-labelledby="event-title">
       <div className="vic-panel vic-frame max-h-[88dvh] w-full max-w-lg overflow-y-auto p-5 sm:p-6">
         <p className="flex items-center gap-2">
           <span className={cn("rounded-[2px] px-1.5 py-0.5 text-[10px] font-bold tracking-[0.15em]", kind.cls)}>{en ? kind.en : kind.zh}</span>

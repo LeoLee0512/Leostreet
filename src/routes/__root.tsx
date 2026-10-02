@@ -1,6 +1,7 @@
 import { HeadContent, Outlet, Scripts, createRootRoute } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
+import { GameDisclaimer } from "@/components/game/GameDisclaimer";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "狮子街传说";
@@ -38,6 +39,7 @@ export const Route = createRootRoute({
         <AuthProvider>
           <Outlet />
         </AuthProvider>
+        <GameDisclaimer />
         <Scripts />
       </body>
     </html>

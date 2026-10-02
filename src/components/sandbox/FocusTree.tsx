@@ -32,7 +32,7 @@ export function FocusTree({ game, en, onClose }: { game: SandboxGame; en: boolea
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-ink/40 p-2 sm:p-6" role="dialog" aria-modal aria-labelledby="focus-title">
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-ink/40 p-2 pb-9 sm:p-6 sm:pb-9" role="dialog" aria-modal aria-labelledby="focus-title">
       <div className="vic-panel flex max-h-full w-full max-w-[78rem] flex-col">
         <header className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-3">
           <div>

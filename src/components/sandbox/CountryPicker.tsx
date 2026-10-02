@@ -55,7 +55,7 @@ export function CountryPicker({ onBack, onStart }: { onBack: () => void; onStart
 
       {/* vic-frame is unlayered `position: relative`; the inline style keeps the panel absolute. */}
       <section
-        className="vic-panel vic-frame inset-x-3 bottom-3 z-10 max-h-[58dvh] overflow-y-auto p-4 sm:inset-x-auto sm:left-5 sm:top-24 sm:bottom-5 sm:max-h-none sm:w-[23rem]"
+        className="vic-panel vic-frame inset-x-3 bottom-9 z-10 max-h-[58dvh] overflow-y-auto p-4 sm:inset-x-auto sm:left-5 sm:top-24 sm:bottom-9 sm:max-h-none sm:w-[23rem]"
         style={{ position: "absolute" }}
       >
         <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-2">

@@ -18,6 +18,23 @@
 
 ---
 
+## 永久免责声明（所有者 2026-10-02 规定，不得移除）
+
+> **此为游戏，切勿当成投资建议，出现一切问题后果自负。**
+> This is a game. Never treat it as investment advice. You bear all consequences of any problem that arises.
+
+- 文案只在 `src/lib/disclaimer.ts` 定义一次。
+- 显示位置：
+  - 网页版与桌面版**每个画面**底部常驻一条提示：`GameDisclaimer`，挂在 `src/routes/__root.tsx` 与 `src/desktop.tsx` 两个根上；不可关闭，不拦截点击；
+  - 复制出去的每份战报末尾：`reportShareText`；
+  - 桌面安装包在复制任何文件之前先显示：`desktop/免责声明.txt`，即 `setup.iss` 的 `InfoBeforeFile`。
+- `src/lib/disclaimer.test.ts` 锁定以上各处。删除、缩短、隐藏或改成可关闭，测试都会失败。
+- 底部常驻条大约占 20px：新加的贴底面板或按钮要留出这段空间（沙盒的面板、选国家面板已经让开）。
+- 以后任何把本游戏接到其他产品（例如 Leo AI）的功能，也必须原样带上这句话。
+- 来历：这条声明最初在 `claude/game-disclaimer` 分支上（提交 `2a6e50f`），2026-10-07 移植进 main 后该分支已删除。
+
+---
+
 ## 1. 当前状态（2026-10-05 本机实测）
 
 | 项目 | 状态 |

@@ -178,16 +178,16 @@ function GameView({ game, onBack }: { game: SandboxGame; onBack: () => void }) {
       </header>
 
       {/* Desktop: desk on the left, dashboard on the right. */}
-      <aside className="vic-panel absolute bottom-3 left-3 top-[7.5rem] z-10 hidden w-80 overflow-y-auto p-3 lg:block" aria-label={en ? "Policy desk" : "央行决策台"}>
+      <aside className="vic-panel absolute bottom-9 left-3 top-[7.5rem] z-10 hidden w-80 overflow-y-auto p-3 lg:block" aria-label={en ? "Policy desk" : "央行决策台"}>
         <PolicyDesk game={game} en={en} onOpenTree={() => setTree(true)} />
       </aside>
-      <aside className="vic-panel absolute bottom-3 right-3 top-[7.5rem] z-10 hidden w-80 overflow-y-auto p-3 lg:block" aria-label={en ? "Dashboard" : "经济仪表"}>
+      <aside className="vic-panel absolute bottom-9 right-3 top-[7.5rem] z-10 hidden w-80 overflow-y-auto p-3 lg:block" aria-label={en ? "Dashboard" : "经济仪表"}>
         <Dashboard game={game} en={en} />
       </aside>
 
       {/* Phones and tablets: one bottom sheet with a switcher. */}
       <section className="absolute inset-x-0 bottom-0 z-10 lg:hidden">
-        <div className="mx-2 mb-2 vic-panel">
+        <div className="mx-2 mb-8 vic-panel">
           <div className="flex gap-1 p-1.5">
             {(
               [
