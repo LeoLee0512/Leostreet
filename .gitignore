@@ -30,3 +30,6 @@ release/*.zip
 {}
 .env
 .env.*
+
+# Blender review renders and intermediate textures (blender/world_map.py)
+blender/out/

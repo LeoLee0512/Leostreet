@@ -1,55 +1,36 @@
-import { useMemo } from "react";
-import { BookOpen, FlaskConical, Globe2, ScrollText, Swords } from "lucide-react";
-import { Coin3D, Crest3D } from "@/components/3d";
-import { createEconomy } from "@/lib/story/economy";
+import { BookOpen, Globe2, Landmark } from "lucide-react";
+import { Crest3D } from "@/components/3d";
 import { sfxClick, sfxGood, unlockAudio } from "@/lib/game/audio";
 import { useI18n, useT } from "@/lib/i18n";
-import { StoryAtlas } from "@/components/story/StoryAtlas";
+import { WorldMap } from "@/components/world/WorldMap";
 
 /**
  * The map IS the main menu: the fictional continent fills the viewport and the
  * mode entries float over it as parchment cards, under a gazette masthead.
  */
 export function MapHome({
-  hasSave,
-  onContinue,
-  onStory,
-  onMatch,
-  onPractice,
+  onStart,
   onCollection,
 }: {
-  hasSave: boolean;
-  onContinue: () => void;
-  onStory: () => void;
-  onMatch: () => void;
-  onPractice: () => void;
+  onStart: () => void;
   onCollection: () => void;
 }) {
   const t = useT();
   const en = useI18n((s) => s.lang) === "en";
-  const economy = useMemo(() => {
-    const e = createEconomy();
-    e.capacity = { materials: 1.5, industry: 1.75, transport: 1.5 };
-    e.sales = 5.5;
-    return e;
-  }, []);
 
   return (
     <main className="relative h-dvh w-full overflow-hidden bg-paper text-ink">
-      <div
-        aria-hidden
-        className="absolute inset-0 [&_.strategic-atlas]:h-full [&_.atlas-viewport]:aspect-auto [&_.atlas-viewport]:h-full"
-      >
-        <StoryAtlas economy={economy} pressure={0.2} en={en} decorative />
+      <div aria-hidden className="absolute inset-0">
+        <WorldMap en={en} decorative className="relative h-full w-full" />
       </div>
       {/* Paper scrims keep the masthead and cards legible over the map. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-60 bg-gradient-to-b from-paper via-paper/85 to-transparent"
+        className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-52 bg-gradient-to-b from-paper via-paper/85 to-transparent sm:h-60"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[62%] bg-gradient-to-t from-paper via-paper/75 to-transparent"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[46%] bg-gradient-to-t from-paper via-paper/75 to-transparent sm:h-[62%]"
       />
 
       <header className="vic-masthead absolute inset-x-0 top-0 z-10 px-4 pt-4 sm:px-8 sm:pt-5">
@@ -108,107 +89,32 @@ export function MapHome({
       </header>
 
       <section
-        aria-label={en ? "Game modes" : "游戏模式"}
-        className="absolute inset-x-0 bottom-0 z-10 px-4 pb-5 sm:px-8 sm:pb-8"
+        aria-label={en ? "Start" : "开始"}
+        className="absolute inset-x-0 bottom-0 z-10 px-4 pb-8 sm:px-8 sm:pb-12"
       >
-        <div className="mx-auto max-w-6xl">
-          {hasSave ? (
-            <button
-              type="button"
-              onClick={() => {
-                unlockAudio();
-                sfxGood();
-                onContinue();
-              }}
-              className="vic-panel vic-frame mb-4 flex w-full flex-wrap items-center gap-4 px-5 py-4 text-left"
-            >
-              <Coin3D size={52} glyph="£" spinning className="shrink-0" />
-              <span className="min-w-0 flex-1">
-                <span className="vic-kicker block">{t("home.continue")}</span>
-                <span className="mt-0.5 block text-sm text-ink-soft">
-                  {t("home.continueSub")}
-                </span>
+        <div className="mx-auto flex max-w-md flex-col items-center">
+          <button
+            type="button"
+            onClick={() => {
+              unlockAudio();
+              sfxGood();
+              onStart();
+            }}
+            className="vic-panel vic-frame group flex w-full items-center justify-center gap-4 px-8 py-6 transition-transform duration-150 hover:-translate-y-0.5 active:scale-[0.99]"
+          >
+            <span className="vic-wax shrink-0 rounded-full" style={{ width: 52, height: 52 }}>
+              <Landmark className="size-6" aria-hidden />
+            </span>
+            <span className="text-left">
+              <span className="vic-kicker block">{en ? "THE CENTRAL BANK AWAITS" : "中央银行虚位以待"}</span>
+              <span className="vic-letterpress mt-1 block text-3xl font-semibold tracking-[0.18em]">
+                {en ? "Start game" : "开始游戏"}
               </span>
-              <span className="vic-btn-seal min-h-11 px-5">{t("game.continue")}</span>
-            </button>
-          ) : null}
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <ModeCard
-              icon={<ScrollText className="size-6" aria-hidden />}
-              kicker={t("home.story")}
-              body={t("home.storySub")}
-              seal
-              onClick={() => {
-                unlockAudio();
-                sfxClick();
-                onStory();
-              }}
-            />
-            <ModeCard
-              icon={<Swords className="size-6" aria-hidden />}
-              kicker={t("home.match")}
-              body={t("home.matchSub")}
-              onClick={() => {
-                unlockAudio();
-                sfxClick();
-                onMatch();
-              }}
-            />
-            <ModeCard
-              icon={<FlaskConical className="size-6" aria-hidden />}
-              kicker={t("home.practice")}
-              body={t("home.practiceSub")}
-              onClick={() => {
-                unlockAudio();
-                sfxClick();
-                onPractice();
-              }}
-            />
-          </div>
-          <p className="mt-4 text-center text-[11px] leading-relaxed text-muted">
-            {t("home.footer")}
-          </p>
+            </span>
+          </button>
+          <p className="mt-4 text-center text-[11px] leading-relaxed text-muted">{t("home.footer")}</p>
         </div>
       </section>
     </main>
-  );
-}
-
-function ModeCard({
-  icon,
-  kicker,
-  body,
-  seal = false,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  kicker: string;
-  body: string;
-  seal?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="vic-panel group flex min-h-11 items-center gap-4 px-4 py-4 text-left transition-transform duration-150 hover:-translate-y-0.5 active:scale-[0.99] sm:flex-col sm:items-start sm:gap-3 sm:px-5 sm:py-5"
-    >
-      <span
-        className={`grid size-11 shrink-0 place-items-center shadow-[var(--shadow-border)] ${
-          seal
-            ? "vic-wax"
-            : "rounded-full bg-brass text-paper ring-2 ring-brass-deep/60 ring-offset-2 ring-offset-surface"
-        }`}
-      >
-        {icon}
-      </span>
-      <span className="min-w-0">
-        <span className="vic-kicker block group-hover:text-brass-deep">{kicker}</span>
-        <span className="mt-1 block text-xs leading-relaxed text-ink-soft sm:text-sm">
-          {body}
-        </span>
-      </span>
-    </button>
   );
 }

@@ -1,0 +1,50 @@
+/* Position comes from the caller's utilities (absolute / relative): an unlayered
+   position here would beat Tailwind's layered classes. */
+.world-map {
+  overflow: hidden;
+  background: #6f8f8c;
+}
+.world-map-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.world-label {
+  display: block;
+  white-space: nowrap;
+  font-family: "Noto Serif SC", Georgia, "Songti SC", SimSun, serif;
+  user-select: none;
+}
+.world-label-country {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  color: #2c2214;
+  text-shadow:
+    0 0 4px rgb(245 237 217 / 0.9),
+    1px 1px 0 rgb(245 237 217 / 0.7),
+    -1px -1px 0 rgb(245 237 217 / 0.7);
+}
+.world-label-sea {
+  font-size: 12px;
+  font-style: italic;
+  letter-spacing: 0.3em;
+  color: rgb(233 240 232 / 0.85);
+  text-shadow: 0 0 3px rgb(47 79 77 / 0.6);
+}
+.world-tooltip {
+  position: fixed;
+  z-index: 40;
+  pointer-events: none;
+  transform: translate(14px, 14px);
+}
+@media (max-width: 640px) {
+  .world-label-country {
+    font-size: 12px;
+  }
+  .world-label-sea {
+    display: none;
+  }
+}

@@ -1,11 +1,9 @@
 /**
  * Tests for 荣誉系统 — the record page.
  *
- * Two things are worth guarding here and neither is exciting. The first is
- * the streak arithmetic, because a streak that resets on a Tuesday when the
- * player did show up is the kind of bug that is only ever noticed by the
- * person it happens to. The second is the balance sheet: a page that shows a
- * player their debts has to reconcile, or it is worse than not showing them.
+ * The streak arithmetic is worth guarding, because a streak that resets on a
+ * Tuesday when the player did show up is the kind of bug that is only ever
+ * noticed by the person it happens to; so is the win-rate tally.
  *
  * Runs on plain Node (`--experimental-strip-types`), so nothing here may reach
  * for a `@/` alias, the DOM, or `localStorage`.
@@ -13,18 +11,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { createInitial } from "./sim.ts";
-import { debt, netWorth } from "./economy.ts";
-import { dayKey, hasVenture, ledgerOf, winRate, winRateByRole, withSession, type Bout, type LoginLog } from "./honor.ts";
-import type { GameState } from "./types.ts";
-
-function fresh(patch: Partial<GameState> = {}): GameState {
-  const s = createInitial("TEST", "retail", "TEST00000001", "male", "leo");
-  s.seed = 123456789;
-  s.rngState = 123456789;
-  s.tick = 15;
-  return Object.assign(s, patch);
-}
+import { dayKey, winRate, winRateByRole, withSession, type Bout, type LoginLog } from "./honor.ts";
 
 const EMPTY: LoginLog = {
   sessions: 0,
@@ -150,58 +137,5 @@ describe("win rate", () => {
     const byRole = winRateByRole([bout({ role: "pm", rated: false })]);
     assert.equal(byRole.pm!.played, 0);
     assert.equal(byRole.pm!.rate, null);
-  });
-});
-
-describe("the balance sheet", () => {
-  it("reconciles: assets minus what you owe is what you are worth", () => {
-    const s = fresh({ cash: 400_000, bankLoan: 120_000 });
-    const l = ledgerOf(s);
-    assert.equal(l.netWorth, netWorth(s));
-    assert.equal(l.personalDebt, debt(s));
-    // The page shows both numbers side by side, so they have to add up on it.
-    assert.ok(Math.abs(l.totalAssets - l.personalDebt - l.netWorth) < 1e-6);
-  });
-
-  it("breaks personal debt into the three things it is actually made of", () => {
-    const s = fresh({ cash: 500_000, bankLoan: 80_000 });
-    const l = ledgerOf(s);
-    assert.equal(l.personalParts.bankLoan, 80_000);
-    assert.equal(l.personalParts.mortgage, 0);
-    assert.equal(
-      l.personalParts.bankLoan + l.personalParts.mortgage + l.personalParts.margin,
-      l.personalDebt,
-    );
-  });
-
-  it("shows no company at all for a player who never started one", () => {
-    const s = fresh();
-    assert.equal(hasVenture(s), false);
-    assert.equal(ledgerOf(s).companyDebt, 0);
-  });
-
-  it("counts client money and outside capital as money the firm owes back", () => {
-    // Both are liabilities in the plain sense the player cares about: somebody
-    // else can ask for them, and the firm has to hand them over.
-    const s = fresh({
-      career: "broker",
-      fundAum: 2_500_000,
-      investors: [{ rivalId: "r1", invested: 750_000, hwm: 1, sinceTick: 0 }],
-    });
-    const l = ledgerOf(s);
-    assert.equal(l.hasVenture, true);
-    assert.equal(l.companyParts.clientAum, 2_500_000);
-    assert.equal(l.companyParts.investors, 750_000);
-    assert.equal(l.companyDebt, 3_250_000);
-    // And it stays out of the personal column, because it is not personal.
-    assert.equal(l.personalDebt, debt(s));
-  });
-
-  it("treats a started venture as a business even with nothing owed yet", () => {
-    const s = fresh({
-      projects: [{ id: "p1", specId: "spec", startTick: 0, doneTick: 100, failed: false }],
-    });
-    assert.equal(hasVenture(s), true);
-    assert.equal(ledgerOf(s).companyDebt, 0);
   });
 });

@@ -2,26 +2,28 @@
 
 > 写给下一个接手的会话。读完这份就能继续干，不用翻聊天记录。
 > **这是唯一最新的交接文档。** `STORY_LEARNING_STRATEGY_PLAYTEST.md` 是第四轮试玩版的交付记录，留作存档，不再描述当前版本。
-> 最后更新：2026-09-24（第五轮：Victoria 3 式亮色羊皮纸主题 + 地图即主界面 + 大清理；第六轮「3D 点缀与对战/练习场深化」进行中）
+> 最后更新：2026-10-05（第六轮：转向「央行行长」大战略——Blender 世界地图、油画肖像、删除对战与练习场、新流程；下一步 G1 央行玩法）
 
 ---
 
 ## 0. 一句话：这个项目现在是什么
 
-**一款 Victoria 3 式亮色羊皮纸风格的金融历史战略游戏**：5v5 对战 + **十四关历史危机剧情战**（按难度排成阶梯，通关一关开下一关）+ 单机练习场。启动即全屏架空大陆地图（「灯湾沿岸」），模式入口卡浮在地图上——**地图就是主界面**。
+**一款 Victoria 3 / 钢铁雄心式的金融历史战略游戏，玩家只扮演央行行长**：**沙盒**（在 Blender 建模的架空世界地图上执掌一国央行，G1 开发中）+ **十四关历史危机剧情战**（按难度排成阶梯，通关一关开下一关）。主菜单是全屏世界地图，只有一个「开始游戏」。
 
-技术栈：TanStack Start + React 19 + Tailwind v4，另有 WinForms + WebView2 + Inno Setup 自研桌面打包（见 §5）。
+技术栈：TanStack Start + React 19 + Tailwind v4 + three.js（@react-three/fiber + drei），另有 WinForms + WebView2 + Inno Setup 自研桌面打包（见 §5）。
 
-它**曾经**是一个"在卡通小镇里走路、进大楼、单机炒股"的游戏。那个版本的地图、房子、车辆、NPC、全部美术素材已经全部删除（用户授权）。**如果你在代码或文案里看到任何"走过去/点大楼/街上逛逛/卡通风格"之类的描述，那是残留，是 bug。**
+它**曾经**是"卡通小镇里单机炒股"，后来又有过 5v5 / 5v5v5 对战和单机练习场（散户/券商/行长三种身份）。**这些全部已删除（用户授权，2026-10-05）。** 如果你在代码或文案里看到"对战/大厅/队友/座位喊话/散户/券商/练习场/走过去点大楼"之类的描述，那是残留，是 bug（剧情关卡里作为历史角色出现的"券商""散户"除外）。
+
+**全虚构世界是有意的产品决策**：真实地图要审图号、真人有名誉权、真实公司有商标问题。可玩世界一律架空，真实历史只出现在「史实档案」里（见 §3.3b）。
 
 ---
 
-## 1. 当前状态（2026-09-24 本机实测）
+## 1. 当前状态（2026-10-05 本机实测）
 
 | 项目 | 状态 |
 |---|---|
-| `npm run test:unit` | **280 通过 / 0 失败**（12 个测试文件，见 `package.json`） |
-| `npm run test:scaffold` | **198 通过 / 0 失败**（`scripts/**/*.test.mjs`） |
+| `npm run test:unit` | **223 通过 / 0 失败**（12 个测试文件，见 `package.json`） |
+| `npm run test:scaffold` | **194 通过 / 4 失败**——4 个失败只出现在 git worktree 里：它们读 `.grok/skills/og/SKILL.md`，而 `.grok/*` 被 gitignore，worktree 里没有。主检出目录里全部通过 |
 | `npm run typecheck`（tsc --noEmit） | 干净 |
 | `npm run build` | 通过 |
 | 浏览器验证 | Windows 本机 dev server + 浏览器实测（方式见 §9「QA 环境」） |
@@ -30,7 +32,9 @@
 
 - `scripts/browser-smoke.mjs` 硬编码 `/workspace` 输出路径，在本机不可用；
 - `scripts/preview.mjs` 的信号语义在 Windows 上不可靠。
-- 所以 QA 流程改为：`npm run dev` 起本机 dev server，用浏览器实际点。历史 smoke 截图与 verdict 存档在 `artifacts/` 和 `screenshots/` 里，仅供参考。
+- 所以 QA 流程改为：`npm run dev` 起本机 dev server，用浏览器实际点。
+
+**worktree 里跑 dev server** 需要依赖：worktree 根目录的 `node_modules` 是指向主检出 `node_modules` 的目录联接（junction），已被 gitignore。
 
 **仓库本身不是 prettier-clean**（老文件也过不了 `prettier --check`），所以别顺手 `npm run format` 全量格式化，那会产生一个没人能审的 diff。
 
@@ -41,15 +45,13 @@
 ## 2. 目录结构
 
 ```
-src/lib/match/          竞技比赛领域模型（纯逻辑，可在 node 直接跑）
-  types.ts              Seat / RoundState / MatchState / Callout
-  roles.ts              五个座位的能力定义 ★核心
-  round.ts              12 只股票的盘面、每个座位的账本、交易、结算
-  series.ts             Bo5/Bo7 赛制、阵容生成、平局判定
-  bots.ts               AI 队友与对手 + 喊话 ★核心
-  rating.ts             排位分 Elo、段位
-  store.ts              zustand 运行时状态（结束时写入荣誉记录）
-  match.test.ts
+src/lib/world/          世界地图数据（G3）
+  world.data.ts         ★生成文件，别手改：6 国 / 38 省 / 省份拾取网格（由 blender/world_map.py 生成）
+  world.ts              provinceAt / atlasToWorld / worldToAtlas / countryOf
+  world.test.ts
+
+src/lib/profile.ts      行长档案（名字、ID、性别）localStorage「leo-street-profile-v1」
+src/lib/game/           只剩通用小件：audio / format / math / honor（登录记录、剧情胜负记录）
 
 src/lib/story/          剧情战领域模型
   types.ts              Scenario / Objective / StoryRun / CallScript / Lexicon
@@ -62,27 +64,24 @@ src/lib/story/          剧情战领域模型
   civic.ts              民生、请愿与复苏评级
   mission.ts            胜利条件与时间线的规则映射
   engagement.ts         收藏、外观、战报、兴趣记录
-  atlas.ts              原创「灯湾沿岸」地理坐标（苍岭/河湾/潮门三省）
+  atlas.ts              剧情用的「灯湾沿岸」地理坐标（苍岭/河湾/潮门三省）
   progress.ts           通关记录、称号、成就（localStorage）
   scenarios.ts          注册表 + 座位名 + 可用储备
-  crises/seats.ts       共用的座位模板与词汇表（Lexicon）+ DIVERGENCES 扰动池
-  crises/panics.ts      1907 / 1929 崩盘 / 1987 黑色星期一 / 1873 北线 / 1890 巴林
-  crises/manias.ts      1846 铁路狂热 / 1720 南海泡沫
-  crises/pegs.ts        1997 泰铢 / 1992 英镑 / 1998 港元
-  crises/leverage.ts    1998 LTCM / 2008 雷曼
-  crises/sovereign.ts   2010–2012 欧债
-  crises/depression.ts  1929–1933 大萧条（炼狱，十八通电话）★
+  crises/*.ts           十四关数据（见 §3.3）
   store.ts              zustand 运行时状态 + 电话状态机
-  story/realtime/economy/civic/cabinet/mission/engagement .test.ts
 
-src/lib/game/honor.ts       荣誉系统：登录记录、对局记录、资产负债表
-src/lib/game/leaderboard.ts Web 版排行榜（桌面构建时被替换为本地桩，见 §5）
+src/components/game/    GameRoot（流程）/ MapHome（主菜单）/ ProfileScreen（建档）/
+                        ModeSelect（沙盒或剧情）/ BankerPortrait（油画肖像）/ LoginCard / LangToggle
+src/components/world/   WorldMap（3D 世界地图组件）/ WorldMapScene / WorldScreen（沙盒全屏地图）
+src/components/story/   剧情 UI（选关 / 前情提要 / 作战室 / 电话 / 复盘 / 时间线 / 收藏 / StoryAtlas）
+src/components/3d/      Scene3D / CanvasRoot 与几个 3D 小件（Coin3D / Crest3D / WaxSeal3D）
 
-src/components/game/    主界面与单机面板：GameRoot / MapHome / TitleScreen /
-                        PlaceMenu / Storefront / HonorPanel / HudBar / Dock …
-src/components/match/   比赛 UI（大厅 / 队前会 / 对局 / 结算）
-src/components/story/   剧情 UI（选关 / 前情提要 / 作战室 / 电话 / 复盘 /
-                        时间线 / 收藏 / 地图 StoryAtlas）
+src/assets/world/       world.glb（2.8MB 地形+首都央行建筑）/ world-poster.jpg（无 WebGL 时的俯视图）/
+                        world-provinces.png（每像素一个省份 id，高亮着色器用）
+src/assets/portraits/   两幅公有领域油画（见 §4）
+
+blender/world_map.py    世界地图生成脚本（便携版 Blender 5.2.2：C:\Users\lijiahao\Desktop\建模\）
+blender/out/            预览渲染与废弃稿，已 gitignore
 
 desktop/                桌面打包（见 §5）
 ```
@@ -93,23 +92,18 @@ desktop/                桌面打包（见 §5）
 
 ## 3. 核心设计（改之前必须理解）
 
-### 3.1 五个座位的信息不对称（对战模式）
+### 3.1 世界地图（G3）★
 
-整个 5v5 模式的支点。规则是：**没有任何一个座位能既知道又开枪。**
+- **唯一真相是 `blender/world_map.py`**。改国家、省份、形状、颜色：改脚本 → 在仓库根目录跑 `blender -b --factory-startup -P blender/world_map.py` → 它会重写 `src/assets/world/*` 和 `src/lib/world/world.data.ts`。别手改生成物。
+- 坐标：图集单位 2400×1500（x 右、y 下）；Blender 里 X=(x−1200)/100、Y=−(y−750)/100；three.js 里 x=(ax−1200)/100、z=(ay−750)/100。
+- 拾取：鼠标点到地形 → 世界坐标转回图集坐标 → `provinceAt` 查 12 单位分辨率的网格。高亮由着色器用 `world-provinces.png` 的 `texelFetch` 做，所以边界跟 Blender 一像素不差。
+- 6 国：狮子国、大卫国、拉莫娜国、诺德岚、瑟林共和国、维岚邦联；38 省，全部虚构命名，每国首都有一座央行建筑。
+- 地名标签是 DOM 层逐帧投影，**不要用 drei `<Html>`**（每个标签一个 React 根，热更新时报 unmount 错）。
+- 主菜单背景是同一张地图的装饰态（无标签、无交互；竖屏时对准狮子国）。
 
-| 座位 | 独有能力 | 代价 |
-|---|---|---|
-| 分析师 | 唯一能看到模型价、久期、真实波动率 | 滑点最高（1.6x） |
-| 交易员 | 滑点最低（0.35x） | 看不到模型价 |
-| 风控 | 看得到全队仓位 + 可强平队友 | 无信息优势 |
-| 消息位 | 消息提前 2 tick | 滑点略高 |
-| 基金经理 | 分配储备金 + 看全队仓位 | 无信息优势 |
+### 3.2 游戏流程
 
-`match.test.ts` 里有两个测试**钉死**了这条不变量。**改 `roles.ts` 的数值时，这两个测试会挡住你把设计改坏。**
-
-### 3.2 AI 队友的喊话 = 唯一的信息管道
-
-删掉地图逛街之后，玩家的信息来源是**听队友喊话**。如果你重构 `bots.ts`，必须保证喊话还在。有测试守着。
+`GameRoot.tsx` 一个 `screen` 状态机：主菜单（只有「开始游戏」）→ 首次进入先 `ProfileScreen` 建档 → `ModeSelect` 二选一：**沙盒**（`WorldScreen`，G1 在这里做）/ **剧情**（`StoryGateway`）。之后再点「开始游戏」直接到选择页。
 
 ### 3.3 剧情战：十四关阶梯
 
@@ -210,25 +204,20 @@ desktop/                桌面打包（见 §5）
 
 ### 3.9 荣誉系统
 
-`src/lib/game/honor.ts` + `components/game/HonorPanel.tsx`，入口在**设置面板顶部**。
-
-- **只读、只描述。** 它不发放任何东西。一个能发奖励的统计页就不再是记录，而是又一个要刷的进度条。
-- **胜率只算「赢了有意义」的对局**：练习赛存进历史、但不进总胜率。没打过就显示 `—`，不显示假的 0%。
-- **公司欠债只在真的创业之后出现**（券商 / 有外部投资人 / 做过项目）。客户托管资产和外部投资人本金都是公司要还回去的钱，所以算负债，并且拆开显示。
-- **总资产 − 个人欠债 = 净资产** 必须对得上，有测试钉着（房产按 equity 计入 `netWorth`，所以总资产要把房贷加回来）。
-- 连胜按**自然日**算，不是按开了几次游戏。在线时长只在标签页可见时累加。
+`src/lib/game/honor.ts`。只读、只描述，不发放任何东西。记录登录天数 / 连续天数 / 在线时长（只在标签页可见时累加）和剧情战的胜负（`recordBout`）。原来的资产负债表与荣誉室面板随练习场一起删除；旧存档里 `kind: "match"` 的对局记录仍能读，不再产生新的。
 
 ---
 
-## 4. 界面现状（第五轮定稿）
+## 4. 界面现状（第六轮）
 
-**主题：Victoria 3 式亮色羊皮纸。** `src/styles.css` 的 `@theme` 段是当前令牌真相：纸色 `--color-paper: #eadfc6`、墨 `--color-ink: #2c2214`、黄铜 `--color-brass: #8f6d1f`、火漆 `--color-seal: #9e2f25`、涨绿 `--color-up: #3e7c4f` / 跌红 `--color-down: #b2382b`；字体是 Playfair Display + Noto Serif SC 的衬线组合，圆角只有 2–6px。其下有一套 `vic-*` 原语类（`vic-panel`、`vic-frame`、`vic-kicker`、`vic-btn-brass`、`vic-btn-seal`、`vic-btn-ghost`、`vic-masthead`、`vic-divider` 等），新 UI 优先复用它们，不要再引入一套新按钮样式。
+**主题：Victoria 3 式亮色羊皮纸。** `src/styles.css` 的 `@theme` 段是当前令牌真相：纸色 `--color-paper: #eadfc6`、墨 `--color-ink: #2c2214`、黄铜 `--color-brass: #8f6d1f`、火漆 `--color-seal: #9e2f25`、涨绿 `--color-up: #3e7c4f` / 跌红 `--color-down: #b2382b`；字体是 Playfair Display + Noto Serif SC 的衬线组合，圆角只有 2–6px。其下有一套 `vic-*` 原语类（`vic-panel`、`vic-frame`、`vic-kicker`、`vic-btn-brass`、`vic-btn-seal`、`vic-btn-ghost`、`vic-masthead`、`vic-divider`、`vic-wax` 等），新 UI 优先复用它们。
 
-**地图即主界面。** `src/components/game/MapHome.tsx`：启动后全屏渲染架空大陆地图（复用 `StoryAtlas`，装饰态），上方是「灯湾公报」式刊头，下方三张模式入口卡（剧情战 / 对战 / 练习场），有存档时顶部多出一条「继续」横幅。`GameRoot.tsx` 管入口分流与全局外观（`data-appearance`）。
+⚠ **`vic-*` 和 `.world-map` 这类 CSS 是 unlayered 的，会压过 Tailwind 的分层工具类**：`vic-btn-ghost` 自带 padding、`vic-wax` 自带 44px 宽高、`background: transparent`。要覆盖就用 inline `style`，别指望 `p-0` / `size-7` / `bg-*` 生效。
 
-- `StoryLaunch.tsx` **已删除**，不再被引用，别再去改它或按它理解入口流程。
-- `TitleScreen.tsx` 仍在用：对战 / 练习场从地图点进去后，先走它的建档流程（未建档时）。
-- 作战室、选关、前情提要、复盘、电话均已羊皮纸化；剧情内部壳是 `cabinet-shell`。
+- **主菜单** `MapHome.tsx`：全屏世界地图 + 刊头 + 一个「开始游戏」；右上角只有「收藏与荣誉室」和中英切换。
+- **建档页** `ProfileScreen.tsx`：登录方式、男/女油画肖像、显示名、游戏 ID。
+- **肖像** `BankerPortrait.tsx`：大都会艺术博物馆 Open Access（CC0 公有领域）的两幅 1805 年油画——男：Henry Raeburn《William Robertson, Lord Robertson》（Met DP169641）；女：John Hoppner《Lady Hester King》（Met DP167134）。裁成半身装进镀金椭圆框，卡片上只署画家与年份，**游戏里不写画中人真名**。用户先后否掉了 3D 建模人物（恐怖谷）和卡通矢量画，明确要写实油画。
+- 作战室、选关、前情提要、复盘、电话均已羊皮纸化；剧情内部壳是 `cabinet-shell`。剧情作战室仍用旧的 `StoryAtlas`（和三行业经济绑定），G1 时再考虑统一。
 
 ---
 
@@ -237,7 +226,7 @@ desktop/                桌面打包（见 §5）
 `desktop/` 是一套自研的 Windows 桌面发行链：**WinForms + WebView2 外壳 + 独立 Vite 构建 + Inno Setup**。
 
 - **外壳**：`desktop/Program.cs`，由系统自带的 `csc.exe`（.NET Framework 4.x）编译成 `LeoStreetLegend.exe`（winexe / x64 / 带 `game.ico` 与 `app.manifest`），运行时嵌 WebView2 加载本地页面；支持 `--check-runtime` 供安装包探测运行时。
-- **独立 Web 构建**：`npm run build:desktop:web` 走 `desktop/vite.config.mjs`，其中用 alias 把 `@/lib/game/leaderboard` 替换为 `desktop/leaderboard.ts`（本地桩——桌面试玩版不接网络排行榜）。
+- **独立 Web 构建**：`npm run build:desktop:web` 走 `desktop/vite.config.mjs`（`publicDir:false`，所以资源必须经 import 进 bundle，不能放 `public/`）。原来的排行榜本地桩 `desktop/leaderboard.ts` 已随排行榜删除。
 - **一键链**：`desktop/build.ps1`，依次执行 ① 清理 `desktop/dist/app` 暂存目录（带路径校验）→ ② `build:desktop:web` → ③ `node desktop/prepare.mjs` 备料 → ④ `csc` 编译外壳 → ⑤ `desktop/tools/inno/ISCC.exe desktop/setup.iss` 打安装包。
 - **版本号**：在 `desktop/setup.iss` 第 1 行 `#define AppVersion "0.1.0"`，改版本只改这一行，安装包文件名自动带上。
 - **产物**：`release/狮子街传说-试玩版-<版本>-安装包.exe`，另有人写的 `release/RELEASE-0.1.0.md` 发行说明。
@@ -279,9 +268,20 @@ desktop/                桌面打包（见 §5）
    - **保留**（用户决定）：根目录 `{}` 文件、`desktop/tools` 的 NSIS 残留、`.vercel/`。
 4. 测试达到 **280 单元 + 198 脚手架**，tsc、build 全绿。
 
-### 第六轮（进行中）：3D 点缀与对战/练习场深化
+### 第六轮：转向「央行行长」大战略（2026-10-05）
 
-方向已定、尚未完成，接手时先确认进行到哪一步再动手。
+用户批准的方向（G1–G4）：玩家**只扮演央行行长**，在世界地图上像 Victoria 3 / 钢铁雄心那样调利率、点国策；世界地图与人物重做。
+
+1. **G3 世界地图**：用便携版 Blender 程序化生成 6 国 38 省的架空大陆（`blender/world_map.py`），导出带贴图的 glb；`WorldMap` 组件可缩放拖动、悬停高亮、点击看省份；主菜单背景换成它。
+2. **G4 人物**：3D 手办（恐怖谷，否决）→ 卡通 SVG（否决）→ **公有领域 19 世纪油画**（定稿，见 §4）。旧的 `Figure3D` / `FigureMesh` / `HeroSprite` 已删。
+3. **流程重做 + 大删除**（用户明确要求「彻底删除 5v5、5v5v5」「不要散户」）：
+   - 删除对战模式全部代码（`src/lib/match`、`src/components/match`）——**G2「多人对战」随之取消**，除非用户重新提出；
+   - 删除旧练习场（交易所/银行/地产/券商/风投/外汇/法庭/商店/排行榜/荣誉室等面板，`sim`/`store`/`economy`/`catalog` 等引擎），以及散户/券商/行长三种身份；
+   - i18n 字典删掉 883 条只给这些模式用的文案；
+   - **保留** `migrations/0002_leaderboard.sql`（线上库可能已有这张表，且脚手架测试检查它存在）。
+4. 新流程：主菜单「开始游戏」→ 建档 → 沙盒 / 剧情（见 §3.2）。
+
+**下一步：G1 沙盒的央行玩法**（选国家、利率/准备金/QE、最后贷款人、汇率干预、国策树与「公信力」，AI 政府与外国央行）。
 
 ---
 
@@ -309,19 +309,19 @@ desktop/                桌面打包（见 §5）
 
 ## 8. 还没做的（开放项）
 
-1. **真联网没做。** 用户选的"先做单机"。旧的 `src/lib/multiplayer/` 客户端权威脚手架已删除——将来做联网请从服务端权威重新设计，不要复活它。Web 版排行榜（`src/lib/game/leaderboard.ts` + `migrations/0002_leaderboard.sql`）在桌面构建里被本地桩替换。
-2. **支付是本地占位。** 纯前端无法做安全支付，UI 已标注"演示收银台"；旧演示商店已明确免费试用、实际扣款 ¥0。
-3. **练习场还是 200 只股票**，对战/剧情用 12 只。
+1. **G1：沙盒的央行玩法还没有**——现在沙盒只是能看能点的世界地图，省份信息卡没有经济数据（故意不放假数据）。
+2. **真联网没做**，对战已删除。将来要做多人，应在世界地图上重新设计（每人一国央行），服务端权威，别复活旧代码。
+3. **支付是本地占位**，随商店一起删了；如果以后加回付费内容，纯前端做不了安全支付。
 4. **剧情战的组队模式目前只是选项**，五座位共守一边的具体交互还没实现（个人模式完整可玩）。
-5. **三小时篇幅目前靠时段数堆出来**（95 个决定点）。内容密度是够的（剧本波 + 电话 + 史料条目都按 `minDetail` 分层），但如果要再往上加，应该加的是**新的电话和新的剧本波**，不是更多时段。
-6. **9 国 9 币 / 农业工业医学的长期目标**：建议**不要**朝那个方向设计——9 国 = 36 个货币对，bug 是平方级增长。可落地的做法是"一个国家 = 一个机制的内容包"，跟剧情战现在的做法一样。
-7. **美术仍是程序生成**（Canvas 地图 + 几何头像 + 令牌化 UI）。要做爆款，下一步是原创插画。
+5. **三小时篇幅目前靠时段数堆出来**（95 个决定点）。要再往上加，应该加**新的电话和新的剧本波**，不是更多时段。
+6. **9 国 9 币**：建议**不要**朝那个方向设计——9 国 = 36 个货币对，bug 是平方级增长。可落地的做法是"一个国家 = 一个机制的内容包"。
+7. `StoryAtlas` 的 `decorative` / `zoomable` 两个参数现在没人用了（原来给主菜单和练习场），G1 统一地图时可一并清理。
 
 ---
 
 ## 9. 容易踩的坑
 
-- **别在 `src/lib/match/**` 或 `src/lib/story/**` 里用 `@/` 别名**，会让 `node --test` 跑不起来。相对路径 + `.ts` 后缀。
+- **别在 `src/lib/**` 里用 `@/` 别名**（story / world / profile / game 都一样），会让 `node --test` 跑不起来。相对路径 + `.ts` 后缀。
 - **改剧情数值前先跑 `story.test.ts`**，平衡是调出来的不是拍出来的。尤其是 §3.6 那条篇幅不变量。
 - **`createRun` 的默认篇幅必须是 `sprint`。** 所有既有平衡测试都建立在"一天一个决定"上。
 - **文案和机制必须一致**（用户明确要求过）。写"你还得让股指不被砸穿"就必须真的检查股指——这条踩过一次，修的办法是给 `Objective` 加了 `equityFloor`。现在还多了 `contain`（同时检查防线、市场和压力）。
@@ -332,7 +332,7 @@ desktop/                桌面打包（见 §5）
   grep -oE '^  "[a-zA-Z0-9_.-]+": \{' src/lib/i18n.ts | sed -E 's/^  "//; s/": \{//' | sort -u > /tmp/h.txt
   comm -23 /tmp/u.txt /tmp/h.txt
   ```
-  正常输出只有 `pr.built-creek` 和 `real.stage`，这两个是误报。
+  正常输出应为空。
 - **史实字段是事实，不是文案。** `historyZh` 必须以「史实：」开头（有测试），里面的日期和数字要经得起查。虚构的部分（北风基金、拉莫娜国）和史实部分在 UI 上是分开呈现的，别把两者混在同一段里。
 - **加新关卡时**：`LADDER`、`crises/` 里的数据文件、`scenarios.ts` 的 `ALL` 三处都要改，难度必须非递减（有测试）。选关页的「共几场」是动态的，不用改文案。
 - **QA 环境**：本机是 Windows，`scripts/browser-smoke.mjs`（硬编码 `/workspace`）和 `scripts/preview.mjs`（信号语义）在本机不可用/不可靠。QA = `npm run dev` + 浏览器实测；启动脚本用 `startup-windows.ps1`（`startup.sh` 是留给 Linux 平台的，别删）。
@@ -344,6 +344,6 @@ desktop/                桌面打包（见 §5）
 
 会话早期用户问过"这个游戏吸引人吗"，当时的回答是不吸引人，核心问题是**前 30 分钟玩家在交易纯噪声**——价格是 GBM，玩家没有信息优势。
 
-整个改造的主线就是解决这一条：**信息来源变成你的队友**（对战），以及**变成一段真实发生过的历史**（剧情战）。五个座位各看一半的牌，不说话就一起输；十四关危机各教一个机制，打完知道为什么 1997 年的泰国和 1998 年的香港结局相反。
+第一次改造让信息来源变成队友（对战）和真实历史（剧情战）。第六轮用户判断对战"太无聊"，转向**央行行长大战略**：玩家不再是在噪声里下注的交易员，而是制造宏观条件的人——利率、承诺、救不救谁——这正是十四关剧情战一直在教的东西。沙盒要做的，是把剧情战里一关一个的机制放到一张活的世界地图上同时运转。
 
-如果后续要做取舍，**优先保住这两条**。
+如果后续要做取舍，**优先保住两条**：剧情战「每关教一个真实机制」，以及沙盒里「玩家是制造宏观条件的人」。

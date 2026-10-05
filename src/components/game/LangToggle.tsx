@@ -25,7 +25,7 @@ export function LangToggle({ className, full }: { className?: string; full?: boo
         type="button"
         onClick={() => setLang("zh")}
         className={cn(
-          "h-8 min-w-10 rounded-[2px] px-2 font-display text-xs font-bold tracking-[0.06em]",
+          "h-8 min-w-10 whitespace-nowrap rounded-[2px] px-2 font-display text-xs font-bold tracking-[0.06em]",
           lang === "zh" ? "bg-brass text-surface shadow-[inset_0_1px_0_#ffffff4d]" : "text-muted hover:text-ink",
         )}
       >
@@ -35,7 +35,7 @@ export function LangToggle({ className, full }: { className?: string; full?: boo
         type="button"
         onClick={() => setLang("en")}
         className={cn(
-          "h-8 min-w-10 rounded-[2px] px-2 font-display text-xs font-bold tracking-[0.06em]",
+          "h-8 min-w-10 whitespace-nowrap rounded-[2px] px-2 font-display text-xs font-bold tracking-[0.06em]",
           lang === "en" ? "bg-brass text-surface shadow-[inset_0_1px_0_#ffffff4d]" : "text-muted hover:text-ink",
         )}
       >

@@ -1,18 +1,3 @@
-import {
-  debt,
-  deposits,
-  futureMtm,
-  netWorth,
-  optionMtm,
-  postedFutures,
-  propertyEquity,
-  shortMarginPosted,
-  stockBorrow,
-  stockMtm,
-  toLeo,
-} from "./economy.ts";
-import type { GameState } from "./types.ts";
-
 /**
  * 荣誉系统 — the record of what this account has actually done.
  *
@@ -65,7 +50,7 @@ export interface Bout {
   won: boolean;
   /** Match: the queue (`ranked`…). Story: the scenario id. */
   tag: string;
-  /** A short human label: "5v5 · BO5" or "地狱 · 三小时". */
+  /** A short human label, e.g. "地狱 · 三小时". */
   note: string;
   /** Ranked only: the rating this bout moved. */
   delta?: number;
@@ -247,75 +232,6 @@ export function winRateByRole(bouts: readonly Bout[], kind?: Bout["kind"]): Reco
 
 export function boutsOf(bouts: readonly Bout[], kind: Bout["kind"]): Bout[] {
   return bouts.filter((b) => b.kind === kind);
-}
-
-/* ------------------------------------------------------------------ */
-/* The balance sheet                                                   */
-/* ------------------------------------------------------------------ */
-
-export interface Ledger {
-  /** Everything owned, before anything owed. */
-  totalAssets: number;
-  /** Assets minus what the player personally owes. */
-  netWorth: number;
-  /** 个人欠债: bank loan, mortgages, and margin borrowed against stock. */
-  personalDebt: number;
-  personalParts: { bankLoan: number; mortgage: number; margin: number };
-  /** Whether the player has actually started something. */
-  hasVenture: boolean;
-  /** 公司欠债: money the firm owes other people and would have to hand back. */
-  companyDebt: number;
-  companyParts: { clientAum: number; investors: number };
-  /** Liquid cash across all three wallets plus deposits. */
-  liquid: number;
-}
-
-/**
- * Whether the player is running a business at all.
- *
- * True for a licensed broker (the firm holds client money), for anyone who has
- * taken outside investors, and for anyone who has started a venture. Retail
- * players who have done none of those never see a company row, because for
- * them there is no company and an empty "公司欠债: 0" is just noise.
- */
-export function hasVenture(s: GameState): boolean {
-  return (
-    s.career === "broker" ||
-    (s.investors?.length ?? 0) > 0 ||
-    (s.projects?.length ?? 0) > 0 ||
-    (s.fundAum ?? 0) > 0
-  );
-}
-
-export function ledgerOf(s: GameState): Ledger {
-  const mortgage = s.ownedProps.reduce((a, h) => a + h.mortgage, 0);
-  const margin = stockBorrow(s);
-  const personalDebt = debt(s);
-  const liquid =
-    s.cash + toLeo(s.cashDvd ?? 0, "dvd", s) + toLeo(s.cashAna ?? 0, "ana", s) + deposits(s);
-  // Property is carried at equity in `netWorth`, so the gross asset figure has
-  // to add the mortgage back or the two numbers would not reconcile.
-  const totalAssets =
-    liquid +
-    stockMtm(s) +
-    optionMtm(s) +
-    futureMtm(s) +
-    postedFutures(s) +
-    shortMarginPosted(s) +
-    propertyEquity(s) +
-    mortgage;
-  const investors = (s.investors ?? []).reduce((a, i) => a + i.invested, 0);
-  const clientAum = Math.max(0, s.fundAum ?? 0);
-  return {
-    totalAssets,
-    netWorth: netWorth(s),
-    personalDebt,
-    personalParts: { bankLoan: s.bankLoan, mortgage, margin },
-    hasVenture: hasVenture(s),
-    companyDebt: clientAum + investors,
-    companyParts: { clientAum, investors },
-    liquid,
-  };
 }
 
 /** Wipe the record. Only ever called from an explicit reset. */

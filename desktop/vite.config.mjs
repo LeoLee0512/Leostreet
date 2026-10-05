@@ -8,6 +8,6 @@ export default defineConfig({
   root:resolve(import.meta.dirname,".."),
   publicDir:false,
   plugins:[react(),tailwindcss(),grokPwaPlugin(),{name:"desktop-dependency-audit", generateBundle(){writeFileSync("desktop/dependency-graph.json",JSON.stringify([...this.getModuleIds()].map(id=>({id,importers:this.getModuleInfo(id)?.importers})),null,2));}}],
-  resolve:{alias:{"@/lib/game/leaderboard":resolve(import.meta.dirname,"leaderboard.ts"),"@":resolve(import.meta.dirname,"../src")}},
+  resolve:{alias:{"@":resolve(import.meta.dirname,"../src")}},
   build:{outDir:"desktop/dist/web",emptyOutDir:true,sourcemap:false,rollupOptions:{input:"desktop/index.html"}},
 });
