@@ -252,7 +252,7 @@ function ProvinceCard({ game, province, en, onClose }: { game: SandboxGame; prov
         <dt className="text-muted">{en ? "Policy rate" : "政策利率"}</dt>
         <dd className="text-right font-mono">{pct(c.rate, 2)}</dd>
       </dl>
-      {!mine ? <p className="mt-1 text-[11px] text-muted">{en ? "Run by an AI central bank." : "由 AI 央行管理。"}</p> : null}
+      {!mine ? <p className="mt-1 text-[11px] text-muted">{en ? "Run by its own central bank." : "由该国央行自行决策。"}</p> : null}
     </div>
   );
 }

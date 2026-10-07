@@ -5,8 +5,8 @@ const app = join(root, 'desktop/dist/app');
 mkdirSync(app, {recursive:true});
 cpSync(join(root,'desktop/dist/web/assets'), join(app,'web/assets'), {recursive:true});
 copyFileSync(join(root,'desktop/dist/web/desktop/index.html'),join(app,'web/index.html'));
-for (const name of ['favicon.svg', 'og.jpg', 'x-banner.jpg', '__grok']) cpSync(join(root,'public',name), join(app,'web',name), {recursive:true});
-writeFileSync(join(app,'web/__grok/manifest.webmanifest'), JSON.stringify({name:'狮子街传说',short_name:'狮子街传说',start_url:'/index.html',display:'standalone',background_color:'#10191f',theme_color:'#10191f',icons:[{src:'/__grok/icon-180.png',sizes:'180x180',type:'image/png'}]}));
+// The desktop app needs only the tab icon; the web build's hosting-platform files are not shipped.
+cpSync(join(root,'public','favicon.svg'), join(app,'web','favicon.svg'));
 const sdk = join(root,'desktop/vendor/webview2');
 for (const name of ['Microsoft.Web.WebView2.Core.dll', 'Microsoft.Web.WebView2.WinForms.dll']) copyFileSync(join(sdk,'lib/net462',name),join(app,name));
 copyFileSync(join(sdk,'runtimes/win-x64/native/WebView2Loader.dll'),join(app,'WebView2Loader.dll'));
