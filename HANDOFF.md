@@ -50,6 +50,18 @@ src/lib/world/          世界地图数据（G3）
   world.ts              provinceAt / atlasToWorld / worldToAtlas / countryOf
   world.test.ts
 
+src/lib/sandbox/        G1 沙盒：央行行长玩法（纯逻辑，node 可跑）
+  types.ts              Macro / SandboxGame / Action / FocusNode / PendingEvent
+  countries.ts          6 国开局设定与难度（维岚★ → 拉莫娜★★★★★）
+  sim.ts                每周一跳的宏观模型 + AI 央行 + 政治 + 玩家操作 act() ★核心
+  events/               40 个事件，五类：core 危机 / history 史实原型 / random 时事 / national 国别 / swans 黑天鹅
+                        （kit.ts 公共类型与工具，index.ts 合并与触发顺序 eventFor）
+  focus.ts              16 项国策，三条分支（BRANCHES），at = 树状图坐标
+  governors.ts          任期结算「史实对照」：七位真实央行行长任期的年均通胀/失业（近似值）
+  provinces.ts          省级失业（地图热力图用）
+  store.ts              zustand：时钟（暂停/1×/2×/3×）、自动存档 localStorage「leo-street-sandbox-v1」
+  sandbox.test.ts       平衡与规则测试
+
 src/lib/profile.ts      行长档案（名字、ID、性别）localStorage「leo-street-profile-v1」
 src/lib/game/           只剩通用小件：audio / format / math / honor（登录记录、剧情胜负记录）
 
@@ -72,7 +84,9 @@ src/lib/story/          剧情战领域模型
 
 src/components/game/    GameRoot（流程）/ MapHome（主菜单）/ ProfileScreen（建档）/
                         ModeSelect（沙盒或剧情）/ BankerPortrait（油画肖像）/ LoginCard / LangToggle
-src/components/world/   WorldMap（3D 世界地图组件）/ WorldMapScene / WorldScreen（沙盒全屏地图）
+src/components/world/   WorldMap（3D 世界地图组件，支持按省着色 tints）/ WorldMapScene
+src/components/sandbox/ SandboxScreen（入口+时钟）/ CountryPicker / PolicyDesk（决策台四个页签）/ FocusTree（国策树弹窗）/
+                        Dashboard（经济仪表）/ Dialogs（事件、任期结算）/ layers（地图图层）
 src/components/story/   剧情 UI（选关 / 前情提要 / 作战室 / 电话 / 复盘 / 时间线 / 收藏 / StoryAtlas）
 src/components/3d/      Scene3D / CanvasRoot 与几个 3D 小件（Coin3D / Crest3D / WaxSeal3D）
 
@@ -103,7 +117,18 @@ desktop/                桌面打包（见 §5）
 
 ### 3.2 游戏流程
 
-`GameRoot.tsx` 一个 `screen` 状态机：主菜单（只有「开始游戏」）→ 首次进入先 `ProfileScreen` 建档 → `ModeSelect` 二选一：**沙盒**（`WorldScreen`，G1 在这里做）/ **剧情**（`StoryGateway`）。之后再点「开始游戏」直接到选择页。
+`GameRoot.tsx` 一个 `screen` 状态机：主菜单（只有「开始游戏」）→ 首次进入先 `ProfileScreen` 建档 → `ModeSelect` 二选一：**沙盒**（`SandboxScreen`）/ **剧情**（`StoryGateway`）。之后再点「开始游戏」直接到选择页。
+
+### 3.2b 沙盒（G1）★
+
+- **一周一跳，十年任期**（520 周）。1× 每周 1 秒、2× 0.5 秒、3× 0.2 秒；事件弹出或任期结束时自动暂停。
+- **模型**（`sim.ts` 顶部注释）：政策立场 = 实际利率 − r* − QE + 准备金 + 风险溢价，滞后约 5 个月生效；产出缺口、通胀、预期（按「市场信誉」锚定）、失业（奥肯）、汇率（实际利差 + 风险）、信贷/泡沫/银行健康、财政与国债。六国互相通过世界利率、世界需求和汇率耦合；另外五国由 AI 按泰勒规则每六周开一次会。
+- **玩家工具**：利率 ±0.25/0.5、准备金率、QE/QT（需国策）、前瞻指引（需国策，违约重罚）、外汇干预、资本管制（30 公信力）、信贷上限（需国策）；最后贷款人通过「挤兑」事件抉择。
+- **两种资源**：市场信誉（0–100，决定预期锚定）和公信力（政治资本点数，每周累积，买国策和部分操作）。另有民意支持、政府施压；民意 <20 且施压 >80 连续 10 周 → 被撤职；通胀 >40% → 恶性通胀下台。
+- **事件**：每周最多一个，按 `events/index.ts` 的 ORDER 先急后缓。**可玩文本（标题/正文/选项）一律虚构命名**，真实人物、国家、货币只能写在 `history` 字段里（弹窗底部的「史实档案」）；测试会扫一张真实名词表。黑天鹅每个每周 0.03%，五个合计平均每局不到一次（测试钉死）。国别事件用 `only` 限定国家。
+- **对外**：「国际互换额度」国策后可每年动用一次互换（+5% GDP 储备）；「国际央行合作」后可提议联合降息/加息，AI 央行只在本国泰勒规则同方向时加入。
+- **评分**：每周福利损失 Σ(π−π*)² + ½(u−u*)²，平均后加危机次数惩罚 → S/A/B/C/D。
+- **平衡由测试钉住**（`sandbox.test.ts`）：同种子可重放；6 国「称职行长」（泰勒规则 + 常理选项）都比「放手不管」好，且都能干满任期；维岚比拉莫娜容易、维岚称职打法拿 S；AI 央行不失控。**改参数后先跑这个文件。**
 
 ### 3.3 剧情战：十四关阶梯
 
@@ -309,7 +334,7 @@ desktop/                桌面打包（见 §5）
 
 ## 8. 还没做的（开放项）
 
-1. **G1：沙盒的央行玩法还没有**——现在沙盒只是能看能点的世界地图，省份信息卡没有经济数据（故意不放假数据）。
+1. **G1 第二版已完成**（国策树、40 个事件、对外合作、史实对照）。可继续：存档多槽位、事件之间的连锁（比如泡沫破裂后更可能出现「投行周末」已经有，但可以更多）、AI 央行之间的危机传染、更细的省级经济。
 2. **真联网没做**，对战已删除。将来要做多人，应在世界地图上重新设计（每人一国央行），服务端权威，别复活旧代码。
 3. **支付是本地占位**，随商店一起删了；如果以后加回付费内容，纯前端做不了安全支付。
 4. **剧情战的组队模式目前只是选项**，五座位共守一边的具体交互还没实现（个人模式完整可玩）。

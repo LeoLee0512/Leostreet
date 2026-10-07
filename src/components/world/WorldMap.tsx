@@ -25,12 +25,14 @@ export function WorldMap({
   en,
   decorative = false,
   selectedId = null,
+  tints = null,
   onSelect,
   className = "",
 }: {
   en: boolean;
   decorative?: boolean;
   selectedId?: number | null;
+  tints?: Uint8Array | null;
   onSelect?: (province: WorldProvince | null) => void;
   className?: string;
 }) {
@@ -59,6 +61,7 @@ export function WorldMap({
               en={en}
               decorative={decorative}
               selectedId={selectedId}
+              tints={tints}
               onHover={setHover}
               onSelect={(p) => onSelect?.(p)}
               onFailed={() => setGl("failed")}

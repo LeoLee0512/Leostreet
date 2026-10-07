@@ -7,6 +7,7 @@ import worldGlbUrl from "@/assets/world/world.glb?url";
 import provincesPngUrl from "@/assets/world/world-provinces.png?url";
 import {
   SEA_ID,
+  TINT_SLOTS,
   WORLD_COUNTRIES,
   WORLD_SEAS,
   WORLD_SHEET,
@@ -26,6 +27,8 @@ export interface WorldMapSceneProps {
   en: boolean;
   decorative: boolean;
   selectedId: number | null;
+  /** Optional per-province wash: RGBA bytes indexed by province id (alpha = strength). */
+  tints?: Uint8Array | null;
   onHover: (hover: WorldHover | null) => void;
   onSelect: (province: WorldProvince | null) => void;
   onFailed: () => void;
@@ -41,15 +44,19 @@ const HALF_H = WORLD_SHEET.h / 200;
  * read with texelFetch so the tint follows the exact Blender borders.
  */
 function useHighlightMaterial(material: THREE.MeshStandardMaterial, ids: THREE.Texture) {
-  const uniforms = useMemo(
-    () => ({
+  const uniforms = useMemo(() => {
+    const layer = new THREE.DataTexture(new Uint8Array(TINT_SLOTS * 4), TINT_SLOTS, 1, THREE.RGBAFormat);
+    layer.colorSpace = THREE.NoColorSpace;
+    layer.magFilter = layer.minFilter = THREE.NearestFilter;
+    layer.needsUpdate = true;
+    return {
       uPick: { value: ids },
       uPickMax: { value: new THREE.Vector2(1, 1) },
       uHover: { value: -1 },
       uSelected: { value: -1 },
-    }),
-    [ids],
-  );
+      uLayer: { value: layer },
+    };
+  }, [ids]);
   useEffect(() => {
     const img = ids.image as { width: number; height: number };
     uniforms.uPickMax.value.set(img.width - 1, img.height - 1);
@@ -62,7 +69,8 @@ function useHighlightMaterial(material: THREE.MeshStandardMaterial, ids: THREE.T
 uniform sampler2D uPick;
 uniform vec2 uPickMax;
 uniform float uHover;
-uniform float uSelected;`,
+uniform float uSelected;
+uniform sampler2D uLayer;`,
         )
         .replace(
           "#include <map_fragment>",
@@ -72,6 +80,8 @@ uniform float uSelected;`,
   ivec2 pc = clamp(ivec2(floor(vMapUv * uPickMax + 0.5)), ivec2(0), ivec2(uPickMax));
   float pid = floor(texelFetch(uPick, pc, 0).r * 255.0 + 0.5);
   if (pid < ${SEA_ID - 0.5}) {
+    vec4 wash = texelFetch(uLayer, ivec2(int(pid), 0), 0);
+    diffuseColor.rgb = mix(diffuseColor.rgb, wash.rgb, wash.a);
     if (abs(pid - uSelected) < 0.5) {
       // Engraved brass hatching reads on every country tint, gold ones included.
       float hatch = step(0.5, fract((vMapUv.x * ${WORLD_SHEET.w}.0 + vMapUv.y * ${WORLD_SHEET.h}.0) / 16.0));
@@ -92,9 +102,10 @@ uniform float uSelected;`,
 function World({
   decorative,
   selectedId,
+  tints,
   onHover,
   onSelect,
-}: Pick<WorldMapSceneProps, "decorative" | "selectedId" | "onHover" | "onSelect">) {
+}: Pick<WorldMapSceneProps, "decorative" | "selectedId" | "tints" | "onHover" | "onSelect">) {
   const { scene } = useGLTF(worldGlbUrl);
   const ids = useLoader(THREE.TextureLoader, provincesPngUrl);
   const invalidate = useThree((s) => s.invalidate);
@@ -122,6 +133,15 @@ function World({
     uniforms.uSelected.value = selectedId ?? -1;
     invalidate();
   }, [selectedId, uniforms, invalidate]);
+
+  useEffect(() => {
+    const tex = uniforms.uLayer.value;
+    const data = tex.image.data as Uint8Array;
+    data.fill(0);
+    if (tints) data.set(tints.subarray(0, data.length));
+    tex.needsUpdate = true;
+    invalidate();
+  }, [tints, uniforms, invalidate]);
 
   const setHover = (id: number) => {
     if (hoverId.current === id) return;
@@ -295,6 +315,7 @@ export default function WorldMapScene({
   en,
   decorative,
   selectedId,
+  tints,
   onHover,
   onSelect,
   onFailed,
@@ -334,7 +355,7 @@ export default function WorldMapScene({
     >
       <hemisphereLight args={["#fff8ea", "#6f8f8c", 1.1]} />
       <directionalLight position={[-6, 14, 8]} intensity={1.5} />
-      <World decorative={decorative} selectedId={selectedId} onHover={onHover} onSelect={onSelect} />
+      <World decorative={decorative} selectedId={selectedId} tints={tints} onHover={onHover} onSelect={onSelect} />
       <LabelProjector labels={labels} nodes={labelNodes} />
       {decorative ? <FitCamera /> : <BoundedControls />}
     </Canvas>

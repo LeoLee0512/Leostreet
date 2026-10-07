@@ -17,6 +17,9 @@ export type WorldProvince = (typeof WORLD_PROVINCES)[number];
 /** Byte value the pick grid and the province texture use for open sea. */
 export const SEA_ID = 255;
 
+/** Width of the per-province tint lookup the map shader reads (≥ province count). */
+export const TINT_SLOTS = 64;
+
 let grid: Uint8Array | null = null;
 function pickGrid(): Uint8Array {
   grid ??= Uint8Array.from(atob(WORLD_DATA.pick.u8), (c) => c.charCodeAt(0));

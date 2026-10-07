@@ -9,7 +9,7 @@ import { StoryBriefing } from "@/components/story/StoryBriefing";
 import { StoryRoom } from "@/components/story/StoryRoom";
 import { StoryDebrief } from "@/components/story/StoryDebrief";
 import { StoryCollection } from "@/components/story/StoryCollection";
-import { WorldScreen } from "@/components/world/WorldScreen";
+import { SandboxScreen } from "@/components/sandbox/SandboxScreen";
 import { MapHome } from "./MapHome";
 import { ModeSelect } from "./ModeSelect";
 import { ProfileScreen } from "./ProfileScreen";
@@ -33,7 +33,7 @@ type Screen = "home" | "profile" | "modes" | "sandbox" | "story" | "collection";
 
 /**
  * Main menu → "Start game" → (first visit: the governor's file) → sandbox or
- * story. The sandbox is the world map, where the central-banker campaign is played.
+ * story. The sandbox is the central-banker campaign on the world map.
  */
 function GameContent() {
   const [booted, setBooted] = useState(false);
@@ -107,7 +107,7 @@ function GameContent() {
         <ProfileScreen initial={null} onBack={home} onDone={signed} />
       );
     case "sandbox":
-      return <WorldScreen onBack={modes} />;
+      return <SandboxScreen onBack={modes} />;
     case "story":
       return <StoryGateway onBack={modes} />;
     default:

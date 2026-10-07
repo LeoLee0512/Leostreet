@@ -17,7 +17,7 @@
     "typecheck": "tsc --noEmit",
     "check:auth": "node scripts/check-auth-invariant.mjs",
     "test": "npm run test:unit && npm run test:scaffold",
-    "test:unit": "node --experimental-strip-types --test src/lib/game/honor.test.ts src/lib/story/story.test.ts src/lib/story/realtime.test.ts src/lib/story/economy.test.ts src/lib/story/civic.test.ts src/lib/story/cabinet.test.ts src/lib/story/mission.test.ts src/lib/story/engagement.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/world/world.test.ts src/lib/profile.test.ts",
+    "test:unit": "node --experimental-strip-types --test src/lib/game/honor.test.ts src/lib/story/story.test.ts src/lib/story/realtime.test.ts src/lib/story/economy.test.ts src/lib/story/civic.test.ts src/lib/story/cabinet.test.ts src/lib/story/mission.test.ts src/lib/story/engagement.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/world/world.test.ts src/lib/profile.test.ts src/lib/sandbox/sandbox.test.ts",
     "test:scaffold": "node --test \"scripts/**/*.test.mjs\"",
     "lint": "eslint .",
     "format": "prettier --write .",
