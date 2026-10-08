@@ -393,6 +393,16 @@ export interface Scenario {
 /** Live state of one scenario run. */
 export interface StoryRun {
   scenarioId: StoryId;
+  /**
+   * Beginner mode (新手模式): pausable at every length, spending sliders keep
+   * their value, and the UI guides. Absent on runs from before the mode existed.
+   */
+  beginner?: boolean;
+  /**
+   * Share of each incoming wave absorbed for a beginner, 0–1. Only the first
+   * rungs of the ladder get any (see `assistFor`); the hard crises stay hard.
+   */
+  assist?: number;
   role: StoryRole;
   mode: StoryMode;
   length: StoryLength;

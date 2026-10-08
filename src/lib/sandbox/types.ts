@@ -158,15 +158,24 @@ export interface Sample {
   trust: number;
 }
 
-export type EndReason = "term" | "fired" | "hyperinflation";
+/** term = ten years served; retired = an endless term ended by choice. */
+export type EndReason = "term" | "retired" | "fired" | "hyperinflation";
+
+export type Letter = "S" | "A" | "B" | "C" | "D";
 
 export interface SandboxGame {
   version: 1;
   seed: number;
   rng: number;
   week: number;
-  /** Game length in weeks (10 years). */
+  /** Game length in weeks (10 years). Ignored when `endless`. */
   length: number;
+  /** Endless term: no fixed end; a review every ten years instead. */
+  endless?: boolean;
+  /** Ten-year reviews of an endless term, oldest first. */
+  decades?: { letter: Letter; avgLoss: number }[];
+  /** Running totals at the start of the current decade. */
+  decadeMark?: { loss: number; crises: number };
   player: CountryId;
   countries: Record<CountryId, Macro>;
   /** Player-only politics. */
@@ -203,4 +212,5 @@ export type Action =
   | { type: "focus"; id: FocusId }
   | { type: "coordinate"; dir: "cut" | "hike" }
   | { type: "requestSwap" }
+  | { type: "retire" }
   | { type: "choose"; choice: string };

@@ -12,7 +12,7 @@ using Microsoft.Web.WebView2.WinForms;
 
 [assembly: System.Reflection.AssemblyTitle("狮子街传说")]
 [assembly: System.Reflection.AssemblyProduct("狮子街传说 · 试玩版")]
-[assembly: System.Reflection.AssemblyVersion("0.1.0.0")]
+[assembly: System.Reflection.AssemblyVersion("0.5.0.0")]
 internal static class Program {
     internal static string Arg(string[] args, string name) {
         int i = Array.IndexOf(args, name);

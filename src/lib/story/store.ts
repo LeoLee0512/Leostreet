@@ -124,7 +124,16 @@ interface StoryStore {
     mode: StoryMode,
     length?: StoryLength,
     seed?: number,
+    opts?: { beginner?: boolean; tutorial?: boolean },
   ) => void;
+  /**
+   * Guided first crisis: the step the coach is on, or null outside the
+   * tutorial. While it is set, time only moves when the player ends the turn.
+   */
+  tutorial: number | null;
+  setTutorial: (step: number | null) => void;
+  /** Beginner mode: jump to the next market reckoning instead of waiting for it. */
+  skipToDeadline: () => void;
   /** Leave the briefing and start the first step. */
   begin: () => void;
   setDraft: (patch: DayOrders) => void;
@@ -175,8 +184,9 @@ export const useStory = create<StoryStore>((set, get) => ({
   pendingBuilds: [],
   pendingOrders: false,
   economicNotice: null,
+  tutorial: null,
 
-  brief: (id, role, mode, length, seed) => {
+  brief: (id, role, mode, length, seed, opts) => {
     // A scenario that does not offer the long tellings falls back to the one
     // it does offer, rather than silently running a length it has no content
     // for.
@@ -184,7 +194,12 @@ export const useStory = create<StoryStore>((set, get) => ({
     const use = length && allowed.includes(length) ? length : allowed[0]!;
     const runSeed = (seed ?? (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0) >>> 0 || 1;
     const initialRun = createRun(id, role, mode, use, runSeed);
+    if (opts?.beginner || opts?.tutorial) {
+      initialRun.beginner = true;
+      initialRun.assist = opts.tutorial ? TUTORIAL_ASSIST : assistFor(scenarioOf(id).grade);
+    }
     set({
+      tutorial: opts?.tutorial ? 0 : null,
       civic: createCivic(initialRun),
       pendingCivic: [],
       paused: false,
@@ -225,6 +240,13 @@ export const useStory = create<StoryStore>((set, get) => ({
   },
 
   setDraft: (patch) => set({ draft: { ...get().draft, ...patch }, rev: get().rev + 1 }),
+  setTutorial: (step) => set({ tutorial: step, rev: get().rev + 1 }),
+  skipToDeadline: () => {
+    const st = get();
+    if (st.screen !== "playing" || st.paused || !st.run?.beginner) return;
+    // Advance exactly to the reckoning, exactly as if the player had waited.
+    get().advanceTime(st.secondsLeft + 1e-6);
+  },
 
   // Orders execute immediately; pausing queues them until time resumes.
   commitDay: () => {
@@ -356,7 +378,7 @@ export const useStory = create<StoryStore>((set, get) => ({
   },
   togglePause: () => {
     const st = get();
-    if (st.screen !== "playing" || !canPause(st.length)) return;
+    if (st.screen !== "playing" || !pausable(st.run, st.length)) return;
     set({ paused: !st.paused, rev: st.rev + 1 });
     if (st.paused) {
       const economy = structuredClone(get().economy);
@@ -628,7 +650,8 @@ function resolveDeadline(set: (patch: Partial<StoryStore>) => void, get: () => S
     queuedPolicy: null,
     draft: {
       rate: result.run.rate,
-      spend: 0,
+      // A beginner's spending slider stays where they left it; experts set it afresh each step.
+      spend: result.run.beginner ? (st.draft.spend ?? 0) : 0,
       buyEquity: 0,
       shortCcy: result.run.shortCcy,
       shortEquity: result.run.shortEquity,
@@ -730,7 +753,7 @@ export function readActiveRun(): ActiveRun | null {
           )
       : [];
     if (!validEconomySave(s)) return null;
-    s.paused = Boolean(s.paused && canPause(r.length));
+    s.paused = Boolean(s.paused && pausable(r, r.length));
     s.secondsLeft = Math.min(s.secondsLeft, decisionSeconds(r));
     return s;
   } catch {
@@ -757,7 +780,7 @@ function executeOrders(set: (patch: Partial<StoryStore>) => void, get: () => Sto
     confirmedDraft: {},
     pendingOrders: false,
     draft: st.pendingOrders
-      ? { ...st.draft, spend: 0, buyEquity: 0, pledge: false, halt: false }
+      ? { ...st.draft, spend: st.run.beginner ? st.draft.spend : 0, buyEquity: 0, pledge: false, halt: false }
       : st.draft,
   });
 }
@@ -841,4 +864,16 @@ function validEconomySave(s: ActiveRun): boolean {
     s.pendingBuilds.every((x) => SECTORS.some((y) => y.id === x)) &&
     typeof s.pendingOrders === "boolean",
   );
+}
+
+/** How much of each wave a beginner is spared, by difficulty grade: the first rungs only. */
+export function assistFor(grade: number): number {
+  return grade <= 1 ? 0.4 : grade === 2 ? 0.3 : grade === 3 ? 0.2 : grade === 4 ? 0.1 : 0;
+}
+/** The guided first crisis is meant to be won: most of each wave is absorbed. */
+export const TUTORIAL_ASSIST = 0.6;
+
+/** Beginners may pause at any length; otherwise only the longer tellings pause. */
+export function pausable(run: StoryRun | null | undefined, length: StoryLength): boolean {
+  return canPause(length) || Boolean(run?.beginner);
 }

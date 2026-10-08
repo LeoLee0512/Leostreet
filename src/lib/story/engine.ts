@@ -595,7 +595,7 @@ export function stepDay(run: StoryRun, orders: DayOrders, rngState: number): { r
   // out — the protection is measured from the high-water mark, the pain from
   // where the lever is sitting today.
   const resist = rateDefence(s, s.rateRatchets ? Math.max(run.rate, run.rateHigh) : run.rate);
-  const wave = raw > 0 ? raw * (1 - resist) * carry * doubt : raw;
+  const wave = raw > 0 ? raw * (1 - resist) * carry * doubt * (1 - (run.assist ?? 0)) : raw;
   const buyback = reserveBite(s, spend);
   const before = run.pressure;
   run.pressure = Math.max(0, run.pressure + wave - buyback);

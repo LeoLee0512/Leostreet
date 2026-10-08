@@ -93,6 +93,17 @@ export function MapHome({
         className="absolute inset-x-0 bottom-0 z-10 px-4 pb-8 sm:px-8 sm:pb-12"
       >
         <div className="mx-auto flex max-w-md flex-col items-center">
+          <p className="vic-panel mb-3 px-4 py-2 text-center text-sm leading-relaxed text-ink">
+            {en ? (
+              <>
+                A financial strategy game. <b>You run the central bank</b>: set rates, rescue banks, and steer a nation through one financial crisis after another.
+              </>
+            ) : (
+              <>
+                金融策略游戏：<b>你是央行行长</b>。调利率、救银行，带着一个国家扛过一场又一场金融危机。
+              </>
+            )}
+          </p>
           <button
             type="button"
             onClick={() => {

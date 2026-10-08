@@ -310,7 +310,7 @@ export function StoryDebrief({ onExit }: { onExit: () => void }) {
             // The same seed: this replays the run that just happened, not a new
             // one at the same crisis. Losing to a history you cannot re-read is
             // not something to learn from.
-            onClick={() => store.brief(run.scenarioId, run.role, run.mode, run.length, run.seed)}
+            onClick={() => store.brief(run.scenarioId, run.role, run.mode, run.length, run.seed, { beginner: run.beginner })}
           >
             {t("sd.retry")}
           </Button>

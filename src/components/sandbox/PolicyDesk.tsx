@@ -2,7 +2,9 @@ import { useState } from "react";
 import { sfxClick } from "@/lib/game/audio";
 import { PROFILES } from "@/lib/sandbox/countries";
 import { FOCUS, FOCUS_BY_ID, focusAvailable } from "@/lib/sandbox/focus";
+import { adviceFor } from "@/lib/sandbox/advisor";
 import { has } from "@/lib/sandbox/sim";
+import { useSettings } from "@/lib/settings";
 import { useSandbox } from "@/lib/sandbox/store";
 import type { Action, SandboxGame } from "@/lib/sandbox/types";
 import { cn } from "@/lib/utils";
@@ -63,8 +65,25 @@ function Monetary({ game, en }: { game: SandboxGame; en: boolean }) {
   const p = PROFILES[game.player];
   const neutral = p.rStar + p.piStar;
   const g = game.guidance;
+  const beginner = useSettings((s) => s.beginner);
+  const advice = adviceFor(game);
   return (
     <>
+      {beginner ? (
+        <div className="mb-3 rounded-[3px] border border-brass-deep bg-[#f6ecd2] px-3 py-2">
+          <p className="vic-kicker">{en ? "ADVISOR" : "顾问建议"}</p>
+          <p className="mt-1 text-sm leading-snug">{tx(advice.text, en)}</p>
+          {advice.delta ? (
+            <button
+              type="button"
+              className={cn(btn, "mt-2 w-full border-brass-deep bg-[#ecd08a]")}
+              onClick={() => go({ type: "rate", delta: advice.delta })}
+            >
+              {advice.delta > 0 ? (en ? "Hike" : "加息") : en ? "Cut" : "降息"} {Math.abs(advice.delta).toFixed(2)}%
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       <Section title={en ? "Policy rate" : "政策利率"} aside={<span className="text-[11px] text-muted">{en ? "neutral" : "中性"} ≈ {pct(neutral, 1)}</span>}>
         <div className="flex items-center justify-between gap-2">
           <span className="font-mono text-3xl font-bold tabular-nums">{pct(m.rate, 2)}</span>
@@ -84,6 +103,7 @@ function Monetary({ game, en }: { game: SandboxGame; en: boolean }) {
         </div>
       </Section>
 
+      <Advanced beginner={beginner} en={en}>
       <Section title={en ? "Reserve requirement" : "存款准备金率"}>
         <div className="flex items-center gap-2">
           <button type="button" className={btn} onClick={() => go({ type: "rrr", delta: -0.5 })}>
@@ -136,7 +156,19 @@ function Monetary({ game, en }: { game: SandboxGame; en: boolean }) {
         )}
         {!has(game, "guidance") ? <Locked text={en ? "Needs the 'Forward guidance' reform" : "需要国策「前瞻指引」"} /> : <p className="mt-1 text-[11px] text-muted">{en ? "25 capital · 26 weeks · breaking it costs trust" : "25 公信力 · 26 周 · 违约重罚信誉"}</p>}
       </Section>
+      </Advanced>
     </>
+  );
+}
+
+/** In beginner mode the advanced tools sit behind one fold; experts see them open. */
+function Advanced({ beginner, en, children }: { beginner: boolean; en: boolean; children: React.ReactNode }) {
+  if (!beginner) return <>{children}</>;
+  return (
+    <details className="mt-4 rounded-[3px] border border-dashed border-line px-2.5 py-1.5">
+      <summary className="cursor-pointer text-xs font-bold text-muted">{en ? "More tools (advanced)" : "更多工具（进阶）"}</summary>
+      {children}
+    </details>
   );
 }
 

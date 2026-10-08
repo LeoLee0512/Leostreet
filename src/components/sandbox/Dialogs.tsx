@@ -1,7 +1,9 @@
 import { sfxClick, sfxGood } from "@/lib/game/audio";
 import { PROFILES } from "@/lib/sandbox/countries";
 import { FOCUS_BY_ID } from "@/lib/sandbox/focus";
+import { recommendedChoice } from "@/lib/sandbox/advisor";
 import { closestGovernor, summarize } from "@/lib/sandbox/governors";
+import { useSettings } from "@/lib/settings";
 import { dateOf, gradeOf, has, nameOf } from "@/lib/sandbox/sim";
 import { useSandbox } from "@/lib/sandbox/store";
 import type { EventKind, SandboxGame } from "@/lib/sandbox/types";
@@ -19,8 +21,10 @@ const KIND: Record<EventKind, { zh: string; en: string; cls: string }> = {
 /** A crisis telegram: the clock stops until the governor answers. */
 export function EventDialog({ game, en }: { game: SandboxGame; en: boolean }) {
   const act = useSandbox((s) => s.act);
+  const beginner = useSettings((s) => s.beginner);
   const e = game.event;
   if (!e) return null;
+  const pick = beginner ? recommendedChoice(game) : null;
   const d = dateOf(e.week);
   const kind = KIND[e.kind] ?? KIND.crisis; // saves from before categories existed
   return (
@@ -52,7 +56,12 @@ export function EventDialog({ game, en }: { game: SandboxGame; en: boolean }) {
                     locked ? "cursor-not-allowed border-dashed border-line opacity-55" : "border-line bg-surface hover:border-brass-deep hover:bg-[#f6ecd2] active:scale-[0.99]",
                   )}
                 >
-                  <span className="block font-bold">{tx(c.label, en)}</span>
+                  <span className="flex items-center gap-2 font-bold">
+                    {tx(c.label, en)}
+                    {pick === c.id ? (
+                      <span className="rounded-[2px] bg-up px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-surface">{en ? "ADVISOR" : "顾问推荐"}</span>
+                    ) : null}
+                  </span>
                   <span className="mt-0.5 block text-xs text-muted">
                     {locked ? `🔒 ${en ? "Needs" : "需要国策"}「${tx(FOCUS_BY_ID[c.requires!].name, en)}」` : tx(c.hint, en)}
                   </span>
@@ -90,12 +99,13 @@ export function EndDialog({ game, en, onExit }: { game: SandboxGame; en: boolean
   const years = (game.week / 52).toFixed(1);
   const { avgPi, avgU } = summarize(game);
   const twin = closestGovernor(game);
-  const title =
-    game.over === "term"
-      ? en ? "Your term is over" : "任期届满"
-      : game.over === "fired"
-        ? en ? "Dismissed" : "你被解职了"
-        : en ? "Hyperinflation" : "恶性通胀";
+  const titles = {
+    term: en ? "Your term is over" : "任期届满",
+    retired: en ? "You step down" : "光荣卸任",
+    fired: en ? "Dismissed" : "你被解职了",
+    hyperinflation: en ? "Hyperinflation" : "恶性通胀",
+  } as const;
+  const title = titles[game.over];
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4" role="dialog" aria-modal aria-labelledby="end-title">
       <div className="vic-panel vic-frame w-full max-w-md p-6 text-center">
@@ -109,6 +119,12 @@ export function EndDialog({ game, en, onExit }: { game: SandboxGame; en: boolean
           {grade.letter}
         </div>
         <p className="mt-3 text-sm text-ink-soft">{tx(VERDICT[grade.letter], en)}</p>
+        {game.decades?.length ? (
+          <p className="mt-2 text-xs text-muted">
+            {en ? "Decade reviews: " : "历次十年评级："}
+            <span className="font-mono font-bold tracking-widest text-ink">{game.decades.map((d) => d.letter).join(" ")}</span>
+          </p>
+        ) : null}
         <dl className="mt-4 grid grid-cols-2 gap-2 text-left text-xs">
           {[
             [en ? "Years served" : "在任", `${years} ${en ? "yrs" : "年"}`],

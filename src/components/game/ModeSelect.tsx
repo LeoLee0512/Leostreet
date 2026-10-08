@@ -4,6 +4,7 @@ import { sfxClick, unlockAudio } from "@/lib/game/audio";
 import { useI18n, useT } from "@/lib/i18n";
 import type { Profile } from "@/lib/profile";
 import { BankerPortrait } from "./BankerPortrait";
+import { BeginnerToggle } from "./BeginnerToggle";
 import { LangToggle } from "./LangToggle";
 
 /** After "Start game": the signed-in governor picks the sandbox or the story. */
@@ -42,7 +43,10 @@ export function ModeSelect({
         <header className="mb-6">
           <div className="flex items-center justify-between gap-3">
             <p className="vic-kicker">{t("game.kicker")}</p>
-            <LangToggle full className="shrink-0" />
+            <span className="flex shrink-0 items-center gap-2">
+              <BeginnerToggle en={en} />
+              <LangToggle full className="shrink-0" />
+            </span>
           </div>
           <div className="vic-divider" aria-hidden />
           <div className="mt-2 flex items-center justify-center gap-4">

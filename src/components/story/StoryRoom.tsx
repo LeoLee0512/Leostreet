@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FastForward, Lightbulb } from "lucide-react";
 import {
   Activity,
   ArrowRight,
@@ -16,10 +17,10 @@ import { calendarDayOf, daysLeft, pegHealth, sessionOf } from "@/lib/story/engin
 import { outboundCalls } from "@/lib/story/calls";
 import { SESSION_LABELS, sessionsOf } from "@/lib/story/lengths";
 import { scenarioOf, seatLabelOf } from "@/lib/story/scenarios";
-import { canPause, SILENCE_WARNING_EN, SILENCE_WARNING_ZH } from "@/lib/story/realtime";
+import { SILENCE_WARNING_EN, SILENCE_WARNING_ZH } from "@/lib/story/realtime";
 import { economyIssue } from "@/lib/story/economy";
 import { getRecoveryRating } from "@/lib/story/civic";
-import { useStory } from "@/lib/story/store";
+import { pausable, useStory } from "@/lib/story/store";
 import type { Scenario, StoryRun } from "@/lib/story/types";
 import { useI18n, useT } from "@/lib/i18n";
 import { Coin3D } from "@/components/3d";
@@ -29,6 +30,7 @@ import { StoryEconomy, PausedEconomyOrders } from "./StoryEconomy";
 import { StoryCivic } from "./StoryCivic";
 import { StoryAtlas } from "./StoryAtlas";
 import { StoryTimeline } from "./StoryTimeline";
+import { TutorialCoach } from "./TutorialCoach";
 
 type Desk = "overview" | "economy" | "civic" | "policy" | "wire";
 export function StoryRoom() {
@@ -36,7 +38,8 @@ export function StoryRoom() {
   const en = useI18n((s) => s.lang) === "en";
   const st = useStory();
   const { run, phone } = st;
-  const [desk, setDesk] = useState<Desk>("overview");
+  // Beginners land on the desk where the decisions are made, not on the map.
+  const [desk, setDesk] = useState<Desk>(() => (useStory.getState().run?.beginner ? "policy" : "overview"));
   const [phoneOpen, setPhoneOpen] = useState<string | null>(null);
   const navigate = (next: Desk) => {
     setDesk(next);
@@ -49,7 +52,8 @@ export function StoryRoom() {
       saved = last;
     const flush = () => {
       const now = performance.now();
-      useStory.getState().advanceTime((now - last) / 1000);
+      // During the guided tutorial the clock waits for the player.
+      if (useStory.getState().tutorial === null) useStory.getState().advanceTime((now - last) / 1000);
       last = now;
       return now;
     };
@@ -75,6 +79,12 @@ export function StoryRoom() {
       document.removeEventListener("visibilitychange", onHide);
     };
   }, []);
+  // Beginners: an incoming call opens by itself instead of waiting behind a banner.
+  const ringing = phone?.script.id ?? null;
+  const beginner = Boolean(run?.beginner);
+  useEffect(() => {
+    if (beginner && ringing) setPhoneOpen(ringing);
+  }, [beginner, ringing]);
   if (!run) return null;
   const s = scenarioOf(run.scenarioId),
     lx = s.lexicon,
@@ -85,13 +95,15 @@ export function StoryRoom() {
   const clock = `${Math.floor(Math.ceil(st.secondsLeft) / 60)
     .toString()
     .padStart(2, "0")}:${(Math.ceil(st.secondsLeft) % 60).toString().padStart(2, "0")}`;
-  const desks = [
+  const allDesks = [
     { id: "overview" as const, zh: "辖区总览", en: "Overview", icon: Landmark },
-    { id: "economy" as const, zh: "产业与贸易", en: "Industry & trade", icon: Building2 },
-    { id: "civic" as const, zh: "民生与议事", en: "Society & council", icon: Users },
+    { id: "economy" as const, zh: beginner ? "产业与贸易（进阶）" : "产业与贸易", en: beginner ? "Industry (advanced)" : "Industry & trade", icon: Building2 },
+    { id: "civic" as const, zh: beginner ? "民生与议事（进阶）" : "民生与议事", en: beginner ? "Society (advanced)" : "Society & council", icon: Users },
     { id: "policy" as const, zh: "政策与机构", en: "Policy & institutions", icon: Activity },
     { id: "wire" as const, zh: "危机纪事", en: "Chronicle", icon: BookOpen },
   ];
+  // The tutorial keeps to the three desks it teaches.
+  const desks = st.tutorial === null ? allDesks : allDesks.filter((d) => d.id !== "economy" && d.id !== "civic");
   if (st.paused)
     return (
       <div className="cabinet-shell min-h-dvh bg-paper p-4 text-ink" data-testid="story-paused">
@@ -151,7 +163,13 @@ export function StoryRoom() {
                   {clock}
                 </p>
               </div>
-              {canPause(run.length) ? (
+              {beginner ? (
+                <button type="button" data-tut="skip" className="vic-btn-seal" onClick={st.skipToDeadline}>
+                  <FastForward className="size-4" />
+                  {en ? "End turn" : "结束本回合"}
+                </button>
+              ) : null}
+              {pausable(run, run.length) ? (
                 <button type="button" className="vic-btn-brass" onClick={st.togglePause}>
                   <Pause className="size-4" />
                   {en ? "Pause" : "暂停"}
@@ -186,6 +204,20 @@ export function StoryRoom() {
         </div>
       </header>
       <div className="mx-auto max-w-7xl px-4 pb-12 pt-4 sm:px-6">
+        {beginner && st.tutorial === null ? (
+          <section className="mb-4 rounded-md border border-brass-deep bg-[#f6ecd2] px-4 py-3" aria-label={en ? "How to win" : "怎么赢"}>
+            <p className="vic-kicker flex items-center gap-1.5">
+              <Lightbulb className="size-4" aria-hidden />
+              {en ? "HOW TO WIN THIS ONE" : "这一关怎么赢"}
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-ink">{en ? s.objectives[run.role].howEn : s.objectives[run.role].howZh}</p>
+            <p className="mt-1.5 text-xs text-muted">
+              {en
+                ? "Each turn: set your levers on the Policy desk → Execute → End turn."
+                : "每回合：在「政策与机构」页调好 → 点「立即执行决策」→ 点「结束本回合」。"}
+            </p>
+          </section>
+        ) : null}
         <StoryTimeline />
         <div className="vic-topbar mb-4 grid grid-cols-2 divide-line overflow-hidden rounded-md border border-line bg-surface shadow-[var(--shadow-border)] sm:grid-cols-3 lg:grid-cols-6">
           <Metric
@@ -210,6 +242,7 @@ export function StoryRoom() {
             label={en ? lx.lineEn : lx.lineZh}
             value={gaugeText(run, s, en)}
             bad={health < 0.3}
+            tut="gauge"
           />
           <Metric
             label={en ? (lx.marketEn ?? "Market index") : (lx.marketZh ?? "股指")}
@@ -262,6 +295,7 @@ export function StoryRoom() {
         {phone && (
           <button
             type="button"
+            data-tut="phone"
             onClick={() => setPhoneOpen(phone.script.id)}
             className="mb-4 flex min-h-14 w-full items-center gap-3 rounded-md border border-brass/60 bg-teal-deep p-3 text-left text-paper shadow-[var(--shadow-border)]"
           >
@@ -558,12 +592,13 @@ export function StoryRoom() {
       {phone && phoneOpen === phone.script.id && (
         <PhoneCall onMinimize={() => setPhoneOpen(null)} />
       )}
+      {st.tutorial !== null ? <TutorialCoach desk={desk} onGoPolicy={() => navigate("policy")} /> : null}
     </main>
   );
 }
-function Metric({ label, value, bad = false }: { label: string; value: string; bad?: boolean }) {
+function Metric({ label, value, bad = false, tut }: { label: string; value: string; bad?: boolean; tut?: string }) {
   return (
-    <div className="min-w-0 border-t-[3px] border-double border-brass/70 bg-gradient-to-b from-paper/60 to-transparent px-4 py-3">
+    <div data-tut={tut} className="min-w-0 border-t-[3px] border-double border-brass/70 bg-gradient-to-b from-paper/60 to-transparent px-4 py-3">
       <p className="truncate text-[10px] font-bold uppercase tracking-widest text-muted">{label}</p>
       <p
         className={`mt-1 text-lg font-semibold tabular-nums ${bad ? "text-down" : "text-ink"}`}

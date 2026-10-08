@@ -39,6 +39,12 @@ const input = (overrides: Partial<StoryReportInput> = {}): StoryReportInput => (
 });
 
 describe("personal story collection", () => {
+  it("keeps reports from every crisis on the ladder, including the Victorian three", () => {
+    for (const scenarioId of ["railway", "panic73", "baring"] as const) {
+      const record = recordStoryReport(input({ scenarioId, seed: scenarioId.length, completedAt: 20000 + scenarioId.length }));
+      assert.ok(record.reports.some((r) => r.scenarioId === scenarioId), scenarioId);
+    }
+  });
   it("records one stable finish once even when the debrief mounts twice", () => {
     const first = recordStoryReport(input());
     const raw = data.get(COLLECTION_KEY);

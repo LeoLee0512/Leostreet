@@ -6,6 +6,7 @@ import { useI18n } from "@/lib/i18n";
 import { COUNTRY_ORDER, PROFILES, initialMacro } from "@/lib/sandbox/countries";
 import { nameOf } from "@/lib/sandbox/sim";
 import type { CountryId } from "@/lib/sandbox/types";
+import { useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 import { countryTint } from "./layers";
 import { pct, tx } from "./format";
@@ -14,9 +15,11 @@ const STARS = ["", "简单", "普通", "进阶", "困难", "极难"];
 const STARS_EN = ["", "Easy", "Normal", "Advanced", "Hard", "Very hard"];
 
 /** Sandbox start: choose the country whose central bank you will run. */
-export function CountryPicker({ onBack, onStart }: { onBack: () => void; onStart: (id: CountryId) => void }) {
+export function CountryPicker({ onBack, onStart }: { onBack: () => void; onStart: (id: CountryId, endless: boolean) => void }) {
   const en = useI18n((s) => s.lang) === "en";
-  const [pick, setPick] = useState<CountryId>("lion");
+  const beginner = useSettings((s) => s.beginner);
+  const [pick, setPick] = useState<CountryId>(beginner ? "velden" : "lion");
+  const [endless, setEndless] = useState(false);
   const tints = useMemo(() => countryTint(pick, 0.42), [pick]);
   const p = PROFILES[pick];
   const m = initialMacro(pick);
@@ -74,7 +77,10 @@ export function CountryPicker({ onBack, onStart }: { onBack: () => void; onStart
               )}
             >
               <span className="block truncate text-sm font-bold">{tx(nameOf(id), en).replace(/^the /, "")}</span>
-              <span className="block text-[10px] tracking-wider text-brass-deep">{"★".repeat(PROFILES[id].difficulty)}</span>
+              <span className="block text-[10px] tracking-wider text-brass-deep">
+                {"★".repeat(PROFILES[id].difficulty)}
+                {beginner && id === "velden" ? <span className="ml-1 rounded-[2px] bg-up px-1 text-surface">{en ? "start here" : "新手推荐"}</span> : null}
+              </span>
             </button>
           ))}
         </div>
@@ -100,13 +106,36 @@ export function CountryPicker({ onBack, onStart }: { onBack: () => void; onStart
             </div>
           ))}
         </dl>
+        <div className="mt-4 grid grid-cols-2 gap-1.5" role="group" aria-label={en ? "Term" : "任期"}>
+          {[
+            [false, en ? "Ten-year term" : "十年任期", en ? "Graded at the end" : "期满结算评级"],
+            [true, en ? "Endless term" : "无限任期", en ? "A review every ten years" : "每十年评级一次"],
+          ].map(([value, label, hint]) => (
+            <button
+              key={String(value)}
+              type="button"
+              aria-pressed={endless === value}
+              onClick={() => {
+                sfxClick();
+                setEndless(value as boolean);
+              }}
+              className={cn(
+                "rounded-[3px] border px-2 py-1.5 text-left transition-colors",
+                endless === value ? "border-brass-deep bg-[#f3e2b4]" : "border-line bg-surface hover:border-brass-deep",
+              )}
+            >
+              <span className="block text-sm font-bold">{label as string}</span>
+              <span className="block text-[10px] text-muted">{hint as string}</span>
+            </button>
+          ))}
+        </div>
         <button
           type="button"
           onClick={() => {
             sfxGood();
-            onStart(pick);
+            onStart(pick, endless);
           }}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-[3px] border border-brass-deep bg-gradient-to-b from-[#ecd08a] to-[#b98f34] px-4 py-3 font-display text-lg font-semibold tracking-[0.2em] text-ink shadow-[inset_0_1px_0_#fff6] active:scale-[0.99]"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-[3px] border border-brass-deep bg-gradient-to-b from-[#ecd08a] to-[#b98f34] px-4 py-3 font-display text-lg font-semibold tracking-[0.2em] text-ink shadow-[inset_0_1px_0_#fff6] active:scale-[0.99]"
         >
           <Landmark className="size-5" aria-hidden />
           {en ? "Take office" : "宣誓就任"}

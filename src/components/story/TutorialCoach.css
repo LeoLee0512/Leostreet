@@ -1,0 +1,21 @@
+/* Spotlight the control the tutorial is talking about. body[data-tut-focus] is set by TutorialCoach. */
+@keyframes tut-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px #b08a2e, 0 0 0 7px #b08a2e33;
+  }
+  50% {
+    box-shadow: 0 0 0 3px #b08a2e, 0 0 0 12px #b08a2e00;
+  }
+}
+body[data-tut-focus="gauge"] [data-tut="gauge"],
+body[data-tut-focus="rate"] [data-tut="rate"],
+body[data-tut-focus="spend"] [data-tut="spend"],
+body[data-tut-focus="execute"] [data-tut="execute"],
+body[data-tut-focus="skip"] [data-tut="skip"],
+body[data-tut-focus="phone"] [data-tut="phone"] {
+  position: relative;
+  z-index: 35;
+  border-radius: 4px;
+  animation: tut-pulse 1.4s ease-in-out infinite;
+}

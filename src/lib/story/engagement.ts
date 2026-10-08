@@ -1,4 +1,5 @@
 import type { StoryLength } from "./types.ts";
+import { LADDER } from "./difficulty.ts";
 import { GAME_DISCLAIMER } from "../disclaimer.ts";
 import type { MissionCondition } from "./mission.ts";
 
@@ -32,19 +33,8 @@ export interface StoryCollectionState {
   appearance: Appearance;
   wishlist: Wish[];
 }
-const SCENARIO_IDS = new Set([
-  "panic07",
-  "southsea",
-  "baht",
-  "crash29",
-  "blackmon",
-  "pound",
-  "ltcm",
-  "euro",
-  "hkd",
-  "depression",
-  "lehman",
-]);
+// Derived from the ladder: a hand-kept list once missed three crises and silently dropped their reports.
+const SCENARIO_IDS = new Set<string>(LADDER);
 const LENGTHS = new Set(["sprint", "standard", "deep", "epic"]);
 const finite = (v: unknown, min: number, max: number): v is number =>
   typeof v === "number" && Number.isFinite(v) && v >= min && v <= max;

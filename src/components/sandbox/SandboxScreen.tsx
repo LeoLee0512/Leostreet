@@ -10,6 +10,7 @@ import { SPEEDS, useSandbox, type Speed } from "@/lib/sandbox/store";
 import type { SandboxGame } from "@/lib/sandbox/types";
 import { countryOf, type WorldProvince } from "@/lib/world/world";
 import { cn } from "@/lib/utils";
+import { BeginnerToggle } from "@/components/game/BeginnerToggle";
 import { CountryPicker } from "./CountryPicker";
 import { Dashboard } from "./Dashboard";
 import { EndDialog, EventDialog } from "./Dialogs";
@@ -33,9 +34,9 @@ export function SandboxScreen({ onBack }: { onBack: () => void }) {
     return (
       <CountryPicker
         onBack={onBack}
-        onStart={(id) => {
+        onStart={(id, endless) => {
           unlockAudio();
-          start(id);
+          start(id, endless);
         }}
       />
     );
@@ -142,6 +143,7 @@ function GameView({ game, onBack }: { game: SandboxGame; onBack: () => void }) {
               </button>
             ))}
           </div>
+          <BeginnerToggle en={en} />
           <dl className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
             {[
               [en ? "Rate" : "利率", pct(m.rate, 2), false],

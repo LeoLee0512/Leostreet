@@ -72,6 +72,7 @@ export function StoryBriefing() {
           </p>
         ) : null}
 
+        <Fold beginner={Boolean(run?.beginner)} en={en}>
         <section className="mt-6" aria-label={en ? "Your first decisions" : "开始后的三条决策线"}>
           <h2 className="vic-kicker">{en ? "THE CITY KEEPS MOVING" : "一座持续运转的城市"}</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
@@ -183,6 +184,8 @@ export function StoryBriefing() {
           <Stat k={t("sc.days")} v={`${run?.days ?? s.days}`} />
         </div>
 
+        </Fold>
+
         <section className="vic-panel vic-frame relative mt-6 border-2 border-brass p-5 text-ink">
           <span className="absolute -right-3 -top-4" aria-hidden>
             <WaxSeal3D size={56} glyph="✦" />
@@ -220,6 +223,19 @@ export function StoryBriefing() {
         </div>
       </div>
     </div>
+  );
+}
+
+/** Beginners see the orders first; the story, the record and the rules sit behind one fold. */
+function Fold({ beginner, en, children }: { beginner: boolean; en: boolean; children: React.ReactNode }) {
+  if (!beginner) return <>{children}</>;
+  return (
+    <details className="vic-panel mt-6 px-5 py-3">
+      <summary className="cursor-pointer text-sm font-bold text-teal-deep">
+        {en ? "Background, history and rules (optional)" : "背景故事、史实与规则（可跳过，点开阅读）"}
+      </summary>
+      {children}
+    </details>
   );
 }
 

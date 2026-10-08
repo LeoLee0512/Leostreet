@@ -272,3 +272,77 @@ describe("historical comparison", () => {
     assert.ok(Number(closestGovernor(g).years.slice(0, 4)) >= 1987);
   });
 });
+
+describe("endless term", () => {
+  function run(g: SandboxGame, weeks: number) {
+    for (let i = 0; i < weeks && !g.over; i++) {
+      if (g.event) g = act(g, { type: "choose", choice: g.event.choices.find((ch) => !ch.requires)!.id }).game;
+      const m = g.countries[g.player];
+      const p = PROFILES[g.player];
+      if (g.week % 6 === 0) {
+        const rule = p.rStar + m.pi + 0.5 * (m.pi - p.piStar) + 0.5 * m.gap;
+        const d = Math.max(-1, Math.min(1, Math.round((rule - m.rate) * 4) / 4));
+        if (d !== 0) g = act(g, { type: "rate", delta: d }).game;
+      }
+      g = stepWeek(g);
+    }
+    return g;
+  }
+
+  it("keeps going past ten years and reviews each decade", () => {
+    const g = run(createGame("velden", 5, true), 520 * 2 + 3);
+    assert.equal(g.over, null);
+    assert.equal(g.decades?.length, 2);
+    assert.ok(["S", "A", "B"].includes(g.decades![0]!.letter));
+  });
+
+  it("lets the governor step down only in an endless term", () => {
+    assert.equal(act(createGame("lion", 1), { type: "retire" }).ok, false);
+    const r = act(createGame("lion", 1, true), { type: "retire" });
+    assert.ok(r.ok);
+    assert.equal(r.game.over, "retired");
+    assert.notEqual(gradeOf(r.game).letter, "D", "stepping down is not a dismissal");
+  });
+
+  it("does not let a long term's crisis count swamp the grade", () => {
+    const g = createGame("lion", 1, true);
+    g.week = 520 * 4;
+    g.loss = g.week * 1;
+    g.crises = 8;
+    assert.ok(gradeOf(g).avgLoss < 2, "8 crises over 40 years ≈ 2 per decade");
+  });
+});
+
+describe("beginner advisor", () => {
+  it("recommends a real option for every event", async () => {
+    const { RECOMMENDED } = await import("./advisor.ts");
+    for (const [key, def] of Object.entries(EVENTS)) {
+      assert.ok(RECOMMENDED[key], `${key} has a recommendation`);
+      const g = createGame("lion", 1);
+      g.focusDone.push(...FOCUS.map((f) => f.id));
+      g.points = 500;
+      assert.ok(def.choices.some((c) => c.id === RECOMMENDED[key]!(g)), `${key} → ${RECOMMENDED[key]!(g)}`);
+    }
+  });
+
+  it("carries a beginner who just follows it through a good term", async () => {
+    const { adviceFor, recommendedChoice } = await import("./advisor.ts");
+    for (const id of ["velden", "lion", "nordlan"] as CountryId[]) {
+      let g = createGame(id, 3);
+      while (!g.over) {
+        if (g.event) {
+          const pick = recommendedChoice(g) ?? g.event.choices.find((c) => !c.requires)!.id;
+          g = act(g, { type: "choose", choice: pick }).game;
+          continue;
+        }
+        if (g.week % 4 === 0) {
+          const a = adviceFor(g);
+          if (a.delta) g = act(g, { type: "rate", delta: a.delta }).game;
+        }
+        g = stepWeek(g);
+      }
+      assert.equal(g.over, "term", id);
+      assert.ok(["S", "A"].includes(gradeOf(g).letter), `${id}: ${gradeOf(g).letter}`);
+    }
+  });
+});

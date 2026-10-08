@@ -18,10 +18,10 @@ export function StoryDecisions() {
       <h2 className="mt-1 text-lg font-bold">{en ? "Decision desk" : "决策台"}</h2>
       <p className="mt-1 text-sm text-muted">{en ? "Policies execute immediately. Production and financing keep running between historical events." : "方案立即执行，历史事件按时到来。提交后可以继续经营与调整，不必等待截止。"}</p>
     </div>
-    <label className="block text-sm font-bold">{en ? lx.rateEn : lx.rateZh} · {(rate * 100).toFixed(2)}%
+    <label data-tut="rate" className="block text-sm font-bold">{en ? lx.rateEn : lx.rateZh} · {(rate * 100).toFixed(2)}%
       <input aria-label={en ? "Policy setting" : "政策设定"} className="mt-2 block min-h-11 w-full" type="range" min={scenario.startRate} max={scenario.maxRate} step={0.0025} value={rate} onChange={(e) => st.setDraft({ rate: Number(e.target.value) })} />
     </label>
-    <AmountOrder label={en ? lx.spendEn : lx.spendZh} field="spend" />
+    <div data-tut="spend"><AmountOrder label={en ? lx.spendEn : lx.spendZh} field="spend" /></div>
     {scenario.allowEquityDefence && <AmountOrder label={en ? lx.buyEn ?? "Support the market" : lx.buyZh ?? "支持市场"} field="buyEquity" />}
     <div className="grid gap-2 sm:grid-cols-2">
       {scenario.allowPledge && <button type="button" aria-pressed={Boolean(st.draft.pledge)} className={`min-h-11 rounded-md border p-3 text-left text-sm font-bold ${st.draft.pledge ? "border-brass bg-teal-soft text-teal-deep" : "border-line bg-surface text-ink"}`} onClick={() => st.setDraft({ pledge: !st.draft.pledge })}>
@@ -51,7 +51,7 @@ export function StoryDecisions() {
       {st.phone.script.options.map((o) => <button key={o.id} type="button" aria-pressed={st.pendingReply === o.id} onClick={() => st.say(o.id)} className={`min-h-11 w-full rounded-lg p-3 text-left text-sm ${st.pendingReply === o.id ? "bg-teal-soft text-teal-deep" : "bg-paper text-ink"}`}>{en ? o.en : o.zh}</button>)}
     </div>}
     {st.paused && st.phone && st.phone.status !== "reply" && <button type="button" className="min-h-11 w-full rounded-lg border-2 border-down p-3 text-sm font-bold text-down" onClick={() => st.decline()}>{en ? "Remain silent on the call" : "电话保持沉默"}{st.pendingReply === "__silence__" ? (en ? " · queued" : " · 已选择") : ""}</button>}
-    <Button className="min-h-11 w-full" onClick={() => st.commitDay()}>{st.paused ? (en ? "Queue decision for resume" : "排入恢复后执行") : st.submitted === "orders" ? (en ? "Execute new decision" : "执行新决策") : (en ? "Execute decision now" : "立即执行决策")}</Button>
+    <Button data-tut="execute" className="min-h-11 w-full" onClick={() => st.commitDay()}>{st.paused ? (en ? "Queue decision for resume" : "排入恢复后执行") : st.submitted === "orders" ? (en ? "Execute new decision" : "执行新决策") : (en ? "Execute decision now" : "立即执行决策")}</Button>
     <button type="button" aria-pressed={st.submitted === "silence"} onClick={() => st.keepSilent()} className="min-h-11 w-full rounded-lg border-2 border-down bg-paper p-3 text-left text-down">
       <span className="block text-base font-extrabold">{en ? "Remain silent" : "保持沉默"}{st.submitted === "silence" ? (en ? " · selected" : " · 已选择") : ""}</span>
       <span className="mt-1 block text-sm font-bold leading-relaxed">{en ? SILENCE_WARNING_EN : SILENCE_WARNING_ZH}</span>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { addPlaySeconds, recordSession } from "@/lib/game/honor";
 import { bootLang } from "@/lib/i18n";
 import { readProfile, writeProfile, type Profile } from "@/lib/profile";
+import { useSettings } from "@/lib/settings";
 import { useStory } from "@/lib/story/store";
 import { readAppearance } from "@/lib/story/engagement";
 import { StoryPicker } from "@/components/story/StoryPicker";
@@ -45,6 +46,7 @@ function GameContent() {
 
   useEffect(() => {
     bootLang();
+    useSettings.getState().boot();
     setProfile(readProfile());
     setBooted(true);
     // 荣誉室 shows 账号登录情况, so the session has to be recorded when it

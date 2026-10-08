@@ -1,7 +1,7 @@
 import { COUNTRY_ORDER, PROFILES, initialMacro } from "./countries.ts";
 import { FOCUS_BY_ID, focusAvailable } from "./focus.ts";
 import { EVENTS, eventFor } from "./events/index.ts";
-import type { Action, CountryId, FocusId, Macro, NewsItem, SandboxGame, Txt } from "./types.ts";
+import type { Action, CountryId, FocusId, Letter, Macro, NewsItem, SandboxGame, Txt } from "./types.ts";
 
 /**
  * The sandbox economy: a small New-Keynesian loop per country, coupled through
@@ -38,7 +38,7 @@ export function has(g: SandboxGame, id: FocusId): boolean {
   return g.focusDone.includes(id);
 }
 
-export function createGame(player: CountryId, seed = Date.now() >>> 0): SandboxGame {
+export function createGame(player: CountryId, seed = Date.now() >>> 0, endless = false): SandboxGame {
   const countries = Object.fromEntries(COUNTRY_ORDER.map((id) => [id, initialMacro(id)])) as Record<CountryId, Macro>;
   const g: SandboxGame = {
     version: 1,
@@ -46,6 +46,9 @@ export function createGame(player: CountryId, seed = Date.now() >>> 0): SandboxG
     rng: seed >>> 0,
     week: 0,
     length: YEARS * 52,
+    endless,
+    decades: [],
+    decadeMark: { loss: 0, crises: 0 },
     player,
     countries,
     points: 40,
@@ -318,11 +321,29 @@ export function stepWeek(prev: SandboxGame): SandboxGame {
 
   if (!g.event) g.event = eventFor(g);
   record(g);
+  if (g.endless && g.week % DECADE === 0) decadeReview(g);
 
   if (m.pi > 40) end(g, "hyperinflation");
   else if (g.lowApprovalWeeks >= 10) end(g, "fired");
-  else if (g.week >= g.length) end(g, "term");
+  else if (!g.endless && g.week >= g.length) end(g, "term");
   return g;
+}
+
+const DECADE = YEARS * 52;
+
+/** Endless terms: grade each decade on its own, so one bad stretch does not haunt the rest. */
+function decadeReview(g: SandboxGame) {
+  const mark = g.decadeMark ?? { loss: 0, crises: 0 };
+  const avgLoss = (g.loss - mark.loss) / DECADE + (g.crises - mark.crises) * 0.4;
+  const letter = letterOf(avgLoss);
+  (g.decades ??= []).push({ letter, avgLoss });
+  g.decadeMark = { loss: g.loss, crises: g.crises };
+  const n = g.decades.length;
+  pushNews(
+    g,
+    { zh: `第 ${n} 个十年评级：${letter}。新的十年开始了。`, en: `Decade ${n} review: ${letter}. A new decade begins.` },
+    letter === "S" || letter === "A" ? "good" : letter === "D" ? "bad" : "info",
+  );
 }
 
 function end(g: SandboxGame, reason: SandboxGame["over"]) {
@@ -330,6 +351,7 @@ function end(g: SandboxGame, reason: SandboxGame["over"]) {
   g.event = null;
   const text: Record<NonNullable<SandboxGame["over"]>, Txt> = {
     term: { zh: "十年任期届满。历史会给你打分。", en: "Your ten-year term is over. History will grade you." },
+    retired: { zh: "你选择卸任，把央行交给继任者。", en: "You step down and hand the bank to your successor." },
     fired: { zh: "政府以「失去公众信任」为由解除了你的职务。", en: "The government dismisses you for 'losing the public's confidence'." },
     hyperinflation: { zh: "恶性通胀。货币已经没人要了，你被迫辞职。", en: "Hyperinflation. Nobody will hold the money any more; you resign." },
   };
@@ -432,6 +454,12 @@ export function act(prev: SandboxGame, a: Action): ActResult {
       g.focusActive = { id: a.id, left: node.weeks };
       return { game: g, ok: true };
     }
+    case "retire": {
+      if (!g.endless) return fail(prev, "十年任期期间不能主动卸任。", "You cannot step down during a ten-year term.");
+      g.event = null;
+      end(g, "retired");
+      return { game: g, ok: true };
+    }
     case "coordinate": {
       if (!has(g, "intlCoop")) return fail(prev, "需要先完成国策「国际央行合作」。", "Complete the 'Central-bank cooperation' focus first.");
       if ((g.cooldown.coordinate ?? 0) > g.week) return fail(prev, "各国央行刚刚联合行动过，半年内不会再来。", "The central banks acted together recently; not again within six months.");
@@ -489,15 +517,19 @@ export function act(prev: SandboxGame, a: Action): ActResult {
 }
 
 export interface Grade {
-  letter: "S" | "A" | "B" | "C" | "D";
+  letter: Letter;
   avgLoss: number;
 }
 
-/** Average weekly welfare loss → a letter grade. */
+export function letterOf(avgLoss: number): Letter {
+  return avgLoss < 1.5 ? "S" : avgLoss < 3 ? "A" : avgLoss < 6 ? "B" : avgLoss < 12 ? "C" : "D";
+}
+
+/** Average weekly welfare loss → a letter grade. Crises count per decade, so long endless terms are not penalised for their length. */
 export function gradeOf(g: SandboxGame): Grade {
-  const avgLoss = g.loss / Math.max(1, g.week) + g.crises * 0.4;
-  const letter = avgLoss < 1.5 ? "S" : avgLoss < 3 ? "A" : avgLoss < 6 ? "B" : avgLoss < 12 ? "C" : "D";
-  return { letter: g.over && g.over !== "term" ? "D" : letter, avgLoss };
+  const avgLoss = g.loss / Math.max(1, g.week) + (g.crises * 0.4 * DECADE) / Math.max(DECADE, g.week);
+  const forced = g.over === "fired" || g.over === "hyperinflation";
+  return { letter: forced ? "D" : letterOf(avgLoss), avgLoss };
 }
 
 export function dateOf(week: number): { year: number; week: number } {

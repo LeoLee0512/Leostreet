@@ -1,11 +1,14 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, BookOpen, Crown, Lock, Trophy } from "lucide-react";
+import { ArrowLeft, BookOpen, Crown, GraduationCap, Lock, Trophy } from "lucide-react";
 import { sfxBad, sfxClick, sfxGood } from "@/lib/game/audio";
 import { SCENARIOS, scenarioOf } from "@/lib/story/scenarios";
 import { gradeOf, isUnlocked, nextTitle, TITLES } from "@/lib/story/difficulty";
 import { estimateMinutes, lengthOf, lengthsFor } from "@/lib/story/lengths";
 import { readStoryProgress } from "@/lib/story/progress";
 import { readActiveRun, useStory } from "@/lib/story/store";
+import { readTutorialDone } from "@/lib/story/tutorial";
+import { useSettings } from "@/lib/settings";
+import { BeginnerToggle } from "@/components/game/BeginnerToggle";
 import type { StoryId, StoryLength, StoryMode, StoryRole } from "@/lib/story/types";
 import { useI18n, useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -39,6 +42,13 @@ export function StoryPicker({ onBack }: { onBack: () => void }) {
   const chosen = lengths.find((l) => l.id === length) ?? lengths[0]!;
   const nextT = nextTitle(cleared.length);
   const held = TITLES.filter((tt) => progress.titles.includes(tt.id));
+  const beginner = useSettings((s) => s.beginner);
+  const tutorialDone = useMemo(() => readTutorialDone(), []);
+  const startTutorial = () => {
+    sfxGood();
+    brief("panic07", "governor", "solo", "sprint", undefined, { tutorial: true });
+    useStory.getState().begin();
+  };
 
   return (
     <div className="cabinet-shell min-h-dvh overflow-y-auto bg-paper px-4 pb-24 pt-6 text-ink sm:px-8 sm:pt-10">
@@ -52,6 +62,8 @@ export function StoryPicker({ onBack }: { onBack: () => void }) {
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">{t("sc.sub")}</p>
             </div>
+            <span className="flex shrink-0 flex-col items-end gap-2">
+            <BeginnerToggle en={en} />
             <button
               type="button"
               className="vic-btn-ghost min-h-11 shrink-0 items-center gap-1.5 px-4"
@@ -60,6 +72,7 @@ export function StoryPicker({ onBack }: { onBack: () => void }) {
               <ArrowLeft className="size-4" aria-hidden />
               {en ? "Back" : "返回"}
             </button>
+            </span>
           </div>
         </header>
 
@@ -73,6 +86,30 @@ export function StoryPicker({ onBack }: { onBack: () => void }) {
             {en
               ? scenarioOf(activeRun.run.scenarioId).nameEn
               : scenarioOf(activeRun.run.scenarioId).nameZh}
+          </button>
+        )}
+        {!tutorialDone ? (
+          <button
+            type="button"
+            onClick={startTutorial}
+            className="vic-panel vic-frame mb-5 flex w-full items-center gap-4 border-2 border-brass-deep px-5 py-4 text-left"
+          >
+            <span className="vic-wax shrink-0 rounded-full" style={{ width: 48, height: 48 }}>
+              <GraduationCap className="size-6" aria-hidden />
+            </span>
+            <span>
+              <span className="vic-kicker block">{en ? "FIRST TIME HERE?" : "第一次玩？"}</span>
+              <span className="mt-0.5 block font-display text-xl font-semibold">
+                {en ? "Start with the guided tutorial (about 5 minutes)" : "先跟着教练玩一遍新手教学（约 5 分钟）"}
+              </span>
+              <span className="mt-0.5 block text-xs text-muted">
+                {en ? "A coach shows you every button. You cannot lose." : "教练会告诉你每一步点哪里，不会输。"}
+              </span>
+            </span>
+          </button>
+        ) : (
+          <button type="button" onClick={startTutorial} className="mb-4 text-sm text-brass-deep underline underline-offset-4">
+            {en ? "Replay the guided tutorial" : "重温新手教学"}
           </button>
         )}
         {/* Where the player is on the ladder, and what the next title costs. */}
@@ -218,6 +255,7 @@ export function StoryPicker({ onBack }: { onBack: () => void }) {
           {en ? gradeOf(scenario.grade).blurbEn : gradeOf(scenario.grade).blurbZh}
         </p>
 
+        {beginner ? null : (
         <section className="my-6 border-l-2 border-brass pl-4 text-ink-soft">
           <h2 className="font-display font-bold">
             {en ? "Single player · economic crisis coordinator" : "单人 · 经济危机决策层"}
@@ -228,11 +266,24 @@ export function StoryPicker({ onBack }: { onBack: () => void }) {
               : "统筹政策、机构协调与市场预期。具体历史职权随关卡变化；1907 年由清算体系协调者承担这一视角。"}
           </p>
         </section>
+        )}
         {/* What this seat is signing up for, before they sign up for it. */}
         <div className="vic-panel mt-3 space-y-3 p-5">
           <Line label={t("sc.youDo")} text={en ? obj.howEn : obj.howZh} />
-          <Line label={t("sc.youWin")} text={en ? obj.winEn : obj.winZh} tone="good" />
-          <Line label={t("sc.trap")} text={en ? obj.trapEn : obj.trapZh} tone="bad" />
+          {beginner ? (
+            <details>
+              <summary className="cursor-pointer text-xs font-bold text-muted">{en ? "How you win, and the trap" : "胜利条件与陷阱（展开）"}</summary>
+              <div className="mt-2 space-y-3">
+                <Line label={t("sc.youWin")} text={en ? obj.winEn : obj.winZh} tone="good" />
+                <Line label={t("sc.trap")} text={en ? obj.trapEn : obj.trapZh} tone="bad" />
+              </div>
+            </details>
+          ) : (
+            <>
+              <Line label={t("sc.youWin")} text={en ? obj.winEn : obj.winZh} tone="good" />
+              <Line label={t("sc.trap")} text={en ? obj.trapEn : obj.trapZh} tone="bad" />
+            </>
+          )}
         </div>
 
         <h2 className="vic-kicker mb-3 mt-8">{t("sc.length")}</h2>
@@ -316,18 +367,18 @@ export function StoryPicker({ onBack }: { onBack: () => void }) {
           })}
         </div>
 
-        <p className="mt-4 text-sm text-muted">
-          {en
-            ? "Multiple seats are reserved for future multiplayer."
-            : "多身份席位保留给后续联机模式。"}
-        </p>
+        {beginner ? null : (
+          <p className="mt-4 text-sm text-muted">
+            {en ? "Multiple seats are reserved for future multiplayer." : "多身份席位保留给后续联机模式。"}
+          </p>
+        )}
         <div className="sticky bottom-0 z-20 mt-6 border-t border-line bg-paper/95 pt-4 pb-9 backdrop-blur-sm">
           <button
             type="button"
             className="vic-btn-seal min-h-11 w-full items-center justify-center gap-2 px-4 py-3 font-semibold"
             onClick={() => {
               sfxGood();
-              brief(id, role, mode, chosen.id);
+              brief(id, role, mode, chosen.id, undefined, { beginner });
             }}
           >
             <BookOpen className="size-4" aria-hidden />

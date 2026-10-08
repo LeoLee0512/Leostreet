@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { COUNTRY_ORDER, PROFILES } from "@/lib/sandbox/countries";
 import { dateOf, nameOf } from "@/lib/sandbox/sim";
 import type { SandboxGame } from "@/lib/sandbox/types";
+import { useSandbox } from "@/lib/sandbox/store";
+import { useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 import { pct, tx } from "./format";
 import { Meter, Section, Spark } from "./ui";
@@ -12,6 +15,7 @@ export function Dashboard({ game, en }: { game: SandboxGame; en: boolean }) {
   const m = game.countries[game.player];
   const p = PROFILES[game.player];
   const h = game.history.slice(-WINDOW);
+  const beginner = useSettings((s) => s.beginner);
   const rows: { label: string; value: string; series: number[]; target?: number; bad: boolean }[] = [
     { label: en ? "Inflation" : "通胀", value: pct(m.pi), series: h.map((s) => s.pi), target: p.piStar, bad: Math.abs(m.pi - p.piStar) > 1.5 },
     { label: en ? "Unemployment" : "失业率", value: pct(m.u), series: h.map((s) => s.u), target: p.uStar, bad: m.u - p.uStar > 1.5 },
@@ -23,7 +27,7 @@ export function Dashboard({ game, en }: { game: SandboxGame; en: boolean }) {
     <div>
       <Section title={en ? "Economy" : "经济"}>
         <ul className="grid gap-1">
-          {rows.map((r) => (
+          {(beginner ? rows.filter((_, i) => i !== 2 && i !== 4) : rows).map((r) => (
             <li key={r.label} className="grid grid-cols-[5.5rem_1fr_4rem] items-center gap-2">
               <span className="text-xs text-ink-soft">{r.label}</span>
               <Spark values={r.series} target={r.target} color={r.bad ? "var(--color-down)" : "var(--color-ink)"} />
@@ -40,8 +44,10 @@ export function Dashboard({ game, en }: { game: SandboxGame; en: boolean }) {
         <Meter label={en ? "Market trust" : "市场信誉"} value={m.trust} tone={m.trust > 65 ? "good" : m.trust > 40 ? "warn" : "bad"} />
         <Meter label={en ? "Public approval" : "民意支持"} value={game.approval} tone={game.approval > 50 ? "good" : game.approval > 25 ? "warn" : "bad"} />
         <Meter label={en ? "Government pressure" : "政府施压"} value={game.pressure} tone={game.pressure < 50 ? "good" : game.pressure < 80 ? "warn" : "bad"} />
+        {game.endless ? <EndlessTerm game={game} en={en} /> : null}
       </Section>
 
+      {beginner ? null : (
       <Section title={en ? "The world" : "各国央行"}>
         <table className="w-full text-xs">
           <thead>
@@ -62,6 +68,7 @@ export function Dashboard({ game, en }: { game: SandboxGame; en: boolean }) {
           </tbody>
         </table>
       </Section>
+      )}
 
       <Section title={en ? "Wires" : "电讯"}>
         <ul className="grid gap-1.5">
@@ -75,6 +82,35 @@ export function Dashboard({ game, en }: { game: SandboxGame; en: boolean }) {
           })}
         </ul>
       </Section>
+    </div>
+  );
+}
+
+/** Endless terms: past decade grades, and a way to step down on your own terms. */
+function EndlessTerm({ game, en }: { game: SandboxGame; en: boolean }) {
+  const act = useSandbox((s) => s.act);
+  const [sure, setSure] = useState(false);
+  return (
+    <div className="mt-3 rounded-[3px] border border-line bg-surface px-2.5 py-2">
+      <p className="text-xs text-ink-soft">
+        {en ? "Endless term" : "无限任期"}
+        {game.decades?.length ? (
+          <>
+            {" · "}
+            {en ? "decades: " : "十年评级："}
+            <b className="font-mono tracking-widest text-ink">{game.decades.map((d) => d.letter).join(" ")}</b>
+          </>
+        ) : (
+          <span className="text-muted">{en ? " · first review at year 10" : " · 第 10 年首次评级"}</span>
+        )}
+      </p>
+      <button
+        type="button"
+        onClick={() => (sure ? act({ type: "retire" }) : setSure(true))}
+        className={cn("mt-1.5 w-full rounded-[3px] border px-2 py-1.5 text-xs font-bold", sure ? "border-down text-down" : "border-line hover:border-brass-deep")}
+      >
+        {sure ? (en ? "Confirm: step down now" : "确认卸任，查看总评") : en ? "Step down" : "主动卸任"}
+      </button>
     </div>
   );
 }

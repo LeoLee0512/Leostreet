@@ -1,4 +1,4 @@
-#define AppVersion "0.4.0"
+#define AppVersion "0.5.0"
 [Setup]
 AppId={{6F80AA19-ACDA-49EA-9564-46C29778CA6A}
 AppName=狮子街传说

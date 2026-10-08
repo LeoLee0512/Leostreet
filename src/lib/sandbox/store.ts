@@ -12,7 +12,7 @@ interface SandboxStore {
   speed: Speed;
   toast: { id: number; text: Txt } | null;
   load: () => void;
-  start: (country: CountryId) => void;
+  start: (country: CountryId, endless?: boolean) => void;
   quit: () => void;
   setSpeed: (s: Speed) => void;
   tick: () => void;
@@ -37,8 +37,8 @@ export const useSandbox = create<SandboxStore>((set, get) => ({
   speed: 0,
   toast: null,
   load: () => set({ game: readSave(), speed: 0 }),
-  start: (country) => {
-    const game = createGame(country);
+  start: (country, endless = false) => {
+    const game = createGame(country, undefined, endless);
     set({ game, speed: 1, toast: null });
     get().save();
   },
