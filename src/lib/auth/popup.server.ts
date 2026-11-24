@@ -39,7 +39,7 @@ export async function handleAuthPopupRequest(request: Request): Promise<Response
     const message: PopupMessage = {
       source: "grok-auth-popup",
       token,
-      ...(errored ? { error: url.searchParams.get("error") ?? "sign_in_failed" } : {}),
+      ...(errored ? { error: safePopupError(url.searchParams.get("error")) } : {}),
     };
     return new Response(completionHtml(message), {
       status: 200,
@@ -76,10 +76,11 @@ export async function handleAuthPopupRequest(request: Request): Promise<Response
 
     if (!apiRes.ok) {
       const detail = await apiRes.text().catch(() => "");
+      console.error("[auth-popup] oauth init failed", apiRes.status, detail.slice(0, 200));
       return completionResponse({
         source: "grok-auth-popup",
         token: null,
-        error: detail || `oauth_init_failed_${apiRes.status}`,
+        error: "oauth_init_failed",
       });
     }
 
@@ -103,13 +104,19 @@ export async function handleAuthPopupRequest(request: Request): Promise<Response
     }
     return new Response(null, { status: 302, headers });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "oauth_init_threw";
+    console.error("[auth-popup] oauth init threw", err);
     return completionResponse({
       source: "grok-auth-popup",
       token: null,
-      error: message,
+      error: "oauth_init_failed",
     });
   }
+}
+
+/** Query errors are reflected into the completion page. Keep them to a short token. */
+function safePopupError(value: string | null): string {
+  if (value && /^[a-z0-9_-]{1,64}$/i.test(value)) return value;
+  return "sign_in_failed";
 }
 
 function completionResponse(message: PopupMessage): Response {

@@ -42,12 +42,10 @@ export function resolveParentEmbedderOrigin(
       );
       if (url.protocol !== "https:" && url.protocol !== "http:") continue;
       if (isGrokEmbedderOrigin(url.origin)) return url.origin;
-      if (
-        isSandboxPreviewGuestHost(guestHostname) ||
-        isRemintPreviewPair(guestHostname, url.hostname)
-      ) {
-        return url.origin;
-      }
+      // A sandbox guest is not enough. Trusting every parent of
+      // `*.grok-sandbox.com` let any website frame the preview and drive it.
+      // Remint previews are the one non-Grok parent that shares this guest's host.
+      if (isRemintPreviewPair(guestHostname, url.hostname)) return url.origin;
     } catch {
       // try next candidate
     }
