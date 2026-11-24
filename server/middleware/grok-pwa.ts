@@ -24,6 +24,7 @@ import {
   renderInstallPageHtml,
   renderWebManifest,
 } from "../../scripts/grok-pwa-shared.mjs";
+import { securityHeaders } from "../../scripts/security-headers.mjs";
 
 interface GrokPwaEvent {
   url: URL;
@@ -34,6 +35,16 @@ function requestHost(event: GrokPwaEvent): string {
   return (
     event.req.headers.get("x-forwarded-host") ?? event.req.headers.get("host") ?? event.url.host
   );
+}
+
+function withSecurityHeaders(response: Response): Response {
+  const headers = new Headers(response.headers);
+  for (const [key, value] of Object.entries(securityHeaders())) headers.set(key, value);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }
 
 function injectHeadStreaming(response: Response, host: string): Response {
@@ -71,12 +82,14 @@ export default async function grokPwaMiddleware(
   const urlWithQuery = path + event.url.search;
 
   if (path === "/__grok/manifest.webmanifest" || path === "/__grok/manifest.json") {
-    return new Response(renderWebManifest(requestHost(event)), {
-      headers: {
-        "content-type": "application/manifest+json; charset=utf-8",
-        "cache-control": "no-cache",
-      },
-    });
+    return withSecurityHeaders(
+      new Response(renderWebManifest(requestHost(event)), {
+        headers: {
+          "content-type": "application/manifest+json; charset=utf-8",
+          "cache-control": "no-cache",
+        },
+      }),
+    );
   }
 
   if (
@@ -88,12 +101,14 @@ export default async function grokPwaMiddleware(
       host: requestHost(event),
       url: urlWithQuery,
     });
-    return new Response(html, {
-      headers: {
-        "content-type": "text/html; charset=utf-8",
-        "cache-control": "no-cache",
-      },
-    });
+    return withSecurityHeaders(
+      new Response(html, {
+        headers: {
+          "content-type": "text/html; charset=utf-8",
+          "cache-control": "no-cache",
+        },
+      }),
+    );
   }
 
   if (!isDocumentPath(path)) return next();
@@ -105,7 +120,8 @@ export default async function grokPwaMiddleware(
     String(result.headers.get("content-type") ?? "").includes("text/html") &&
     !result.headers.get("content-encoding")
   ) {
-    return injectHeadStreaming(result, requestHost(event));
+    return withSecurityHeaders(injectHeadStreaming(result, requestHost(event)));
   }
+  if (result instanceof Response) return withSecurityHeaders(result);
   return result;
 }

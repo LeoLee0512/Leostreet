@@ -2,6 +2,7 @@ import { genericOAuthClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import { runPreSignInSignOut, runSignOut } from "../../../scripts/sign-out-plan.mjs";
 import { GROK_PROVIDERS } from "./providers";
+import { safeAppPath } from "./redirect";
 
 /**
  * Better Auth client for this React SPA (browser-side).
@@ -100,8 +101,8 @@ export async function signIn(
   providerId: string,
   opts: { callbackURL?: string; errorCallbackURL?: string } = {},
 ): Promise<void> {
-  const callbackURL = opts.callbackURL ?? "/";
-  const errorCallbackURL = opts.errorCallbackURL ?? "/";
+  const callbackURL = safeAppPath(opts.callbackURL);
+  const errorCallbackURL = safeAppPath(opts.errorCallbackURL);
 
   // Open the popup SYNCHRONOUSLY on the user gesture — before any await
   // (including signOut). Awaiting first drops user-gesture privilege in some
@@ -136,8 +137,8 @@ export async function signIn(
     if (typeof window !== "undefined") {
       const dest = new URL(callbackURL, window.location.origin);
       const here = window.location;
-      if (dest.origin !== here.origin || dest.pathname !== here.pathname || dest.search !== here.search) {
-        window.location.href = callbackURL;
+      if (dest.pathname !== here.pathname || dest.search !== here.search || dest.hash !== here.hash) {
+        window.location.assign(`${dest.pathname}${dest.search}${dest.hash}`);
       }
     }
     return;
@@ -149,7 +150,13 @@ export async function signIn(
     errorCallbackURL,
   });
   if (error) throw new Error(error.message ?? "Sign-in failed");
-  if (data?.url) window.location.href = data.url;
+  if (data?.url) {
+    const next = new URL(data.url, window.location.origin);
+    if (next.protocol !== "https:" && next.protocol !== "http:") {
+      throw new Error("Sign-in failed");
+    }
+    window.location.assign(next.href);
+  }
 }
 
 /**
@@ -185,7 +192,7 @@ function waitForPopupToken(popup: Window): Promise<string | null> {
       resolve(token);
     };
     const onMessage = (event: MessageEvent) => {
-      if (event.origin !== origin) return;
+      if (event.origin !== origin || event.source !== popup) return;
       const data = event.data as PopupMessage | undefined;
       if (!data || data.source !== "grok-auth-popup") return;
       settle(data.token ?? null);
@@ -219,6 +226,7 @@ function waitForPopupToken(popup: Window): Promise<string | null> {
  * preview the local clear is sufficient, so it always resolves.
  */
 export async function signOut(redirectTo = "/"): Promise<void> {
+  const dest = safeAppPath(redirectTo);
   await runSignOut({
     livePreview: inLivePreview(),
     hasBearer: Boolean(getBearerToken()),
@@ -230,7 +238,7 @@ export async function signOut(redirectTo = "/"): Promise<void> {
     },
     clearToken: () => setBearerToken(null),
     redirect: () => {
-      window.location.href = redirectTo;
+      window.location.assign(dest);
     },
   });
 }

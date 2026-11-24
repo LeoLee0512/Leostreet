@@ -56,10 +56,11 @@ test("non-.sql entries are dropped (readdir also yields the auth/ directory)", (
   assert.deepEqual(pendingMigrations(["auth", "README.md"], []), []);
 });
 
-test("only the leaderboard migration ships at the globbed root", () => {
+test("leaderboard migrations create the old table and then drop it", () => {
   const migrationsDir = join(projectRoot(), "migrations");
   assert.deepEqual(pendingMigrations(readdirSync(migrationsDir), []), [
     { name: "0002_leaderboard.sql", path: "0002_leaderboard.sql" },
+    { name: "0003_drop_leaderboard.sql", path: "0003_drop_leaderboard.sql" },
   ]);
   assert.ok(readdirSync(join(migrationsDir, "auth")).includes("0001_auth.sql"));
 });

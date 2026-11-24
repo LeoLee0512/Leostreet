@@ -23,6 +23,12 @@ internal static class Program {
             try { CoreWebView2Environment.GetAvailableBrowserVersionString(); return 0; }
             catch { return 2; }
         }
+        // The player binary can run scripted QA, but only when a developer opts in.
+        // A shortcut or other local launcher cannot pass --test-script on its own.
+        if (Array.IndexOf(args, "--test-script") >= 0 && Environment.GetEnvironmentVariable("LEOSTREET_QA") != "1") {
+            MessageBox.Show("这个启动参数不能用于试玩。请直接打开游戏。", "狮子街传说");
+            return 2;
+        }
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
         string profile = Arg(args, "--test-profile") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LeoStreetLegend", "WebView2");
@@ -79,6 +85,17 @@ internal sealed class GameWindow : Form {
             view.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
             view.CoreWebView2.Settings.IsStatusBarEnabled = false;
             view.CoreWebView2.Settings.IsWebMessageEnabled = false;
+            // Document navigations are checked below. This also stops stylesheets,
+            // images and fetches from leaving the virtual host.
+            view.CoreWebView2.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All);
+            view.CoreWebView2.WebResourceRequested += delegate(object s, CoreWebView2WebResourceRequestedEventArgs e) {
+                Uri resource;
+                if (Uri.TryCreate(e.Request.Uri, UriKind.Absolute, out resource)) {
+                    if (resource.Host.Equals("leostreet.example", StringComparison.OrdinalIgnoreCase)) return;
+                    if (resource.Scheme == "blob" || resource.Scheme == "data" || resource.Scheme == "about") return;
+                }
+                e.Response = view.CoreWebView2.Environment.CreateWebResourceResponse(new MemoryStream(), 403, "Forbidden", "Content-Type: text/plain");
+            };
             view.CoreWebView2.NavigationStarting += delegate(object s, CoreWebView2NavigationStartingEventArgs e) {
                 Uri uri;
                 if (!Uri.TryCreate(e.Uri, UriKind.Absolute, out uri) || uri.Scheme != "https" || uri.Host != "leostreet.example") e.Cancel = true;

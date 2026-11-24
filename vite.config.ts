@@ -11,6 +11,8 @@ import { grokPwaPlugin } from "./scripts/grok-pwa-plugin.mjs";
 // @ts-expect-error JS plugin alongside the TS vite config
 import { appEnvPlugin } from "./scripts/app-env-plugin.mjs";
 import { isMigrationFile } from "./scripts/migration-plan.mjs";
+import { isAllowedAuthHost, isAllowedForwardedProto } from "./scripts/auth-host.mjs";
+import { securityHeaders } from "./scripts/security-headers.mjs";
 
 /** The files `src/lib/db.ts` globs — same directory, same non-recursive scope. */
 function hasGlobbedMigrations(root: string): boolean {
@@ -84,13 +86,19 @@ function authPopupPlugin(): Plugin {
             return;
           }
 
-          const host = String(
-            req.headers["x-forwarded-host"] ?? req.headers.host ?? "localhost:8080",
-          );
-          const proto = String(
-            req.headers["x-forwarded-proto"] ??
-              ((req.socket as { encrypted?: boolean } | undefined)?.encrypted ? "https" : "http"),
-          );
+          const forwardedHost = firstHeader(req.headers["x-forwarded-host"]);
+          const hostHeader = firstHeader(req.headers.host) || "localhost:8080";
+          const host = isAllowedAuthHost(forwardedHost)
+            ? forwardedHost
+            : isAllowedAuthHost(hostHeader)
+              ? hostHeader
+              : "localhost:8080";
+          const forwardedProto = firstHeader(req.headers["x-forwarded-proto"]);
+          const proto = isAllowedForwardedProto(forwardedProto)
+            ? forwardedProto.split(",")[0]!.trim()
+            : (req.socket as { encrypted?: boolean } | undefined)?.encrypted
+              ? "https"
+              : "http";
           const requestHeaders = new Headers();
           for (const [key, value] of Object.entries(req.headers)) {
             if (value === undefined) continue;
@@ -100,9 +108,12 @@ function authPopupPlugin(): Plugin {
               requestHeaders.set(key, value);
             }
           }
-          // Ensure Host is the public preview host so Better Auth's dynamic
-          // baseURL / redirect_uri match the popup origin.
-          if (!requestHeaders.has("host")) requestHeaders.set("host", host);
+          // Replace forwarded host/proto with the validated values. Better Auth
+          // derives the OAuth redirect_uri from them, so a spoofed header must
+          // not survive into that request.
+          requestHeaders.set("host", host);
+          requestHeaders.set("x-forwarded-host", host);
+          requestHeaders.set("x-forwarded-proto", proto);
 
           const request = new Request(`${proto}://${host}${rawUrl}`, {
             method: "GET",
@@ -145,11 +156,17 @@ function authPopupPlugin(): Plugin {
 // `0.0.0.0:8080` is the live-preview contract — don't change host/port.
 // The dev server starts once `src/router.tsx` and `src/routes/` exist — see
 // AGENTS.md § "First scaffold".
+function firstHeader(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) return value[0] ?? "";
+  return value ?? "";
+}
+
 export default defineConfig(({ command, isPreview }) => ({
   server: {
     host: "0.0.0.0",
     port: 8080,
     strictPort: true,
+    headers: securityHeaders(),
     watch: {
       // Desktop packaging writes installers and staged apps here; watching them
       // crashes the dev server on Windows (EBUSY on the locked exe).
@@ -160,6 +177,7 @@ export default defineConfig(({ command, isPreview }) => ({
     host: "127.0.0.1",
     port: 8081,
     strictPort: true,
+    headers: securityHeaders(),
   },
   resolve: { tsconfigPaths: true },
   plugins: [
